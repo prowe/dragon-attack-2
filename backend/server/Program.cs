@@ -13,6 +13,12 @@ namespace DragonAttack
             ConfigureServices(builder.Services);
 
             var app = builder.Build();
+            app.UseCors(builder =>
+            {
+                builder.AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
 
             app.MapGet("/", () => "Hello World!");
             app.UseGraphQL<ISchema>();
@@ -21,6 +27,7 @@ namespace DragonAttack
 
         private static void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors();
             services.AddSingleton<CounterHolder>();
             services.AddSingleton<MutationResolvers>();
             services.AddSingleton<QueryResolvers>();

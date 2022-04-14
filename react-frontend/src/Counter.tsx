@@ -1,4 +1,6 @@
 import { ApolloClient, ApolloProvider, gql, InMemoryCache, useMutation, useQuery } from "@apollo/client";
+import { SubscriptionClient } from 'subscriptions-transport-ws'
+import { WebSocketLink } from '@apollo/client/link/ws';
 import { GetCounterQuery, IncrementCounterMutation } from "./generated/graphql";
 
 const IncrementCounter = gql`
@@ -42,18 +44,12 @@ function CounterDisplay() {
     )
 }
 
-const apolloClient = new ApolloClient({
-    cache: new InMemoryCache(),
-    uri: 'http://localhost:5210/graphql',
-});
 
 export default function Counter() {
     return (
-        <ApolloProvider client={apolloClient}>
-            <section>
-                <CounterDisplay />
-                <IncrementButton />
-            </section>
-        </ApolloProvider>
+        <section>
+            <CounterDisplay />
+            <IncrementButton />
+        </section>
     );
 }

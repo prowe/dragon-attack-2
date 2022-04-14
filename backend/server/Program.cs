@@ -1,5 +1,8 @@
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using GraphQL;
+using GraphQL.Reflection;
+using GraphQL.Resolvers;
 using GraphQL.Server;
 using GraphQL.Types;
 
@@ -21,6 +24,8 @@ namespace DragonAttack
             });
 
             app.MapGet("/", () => "Hello World!");
+            app.UseWebSockets();
+            app.UseGraphQLWebSockets<ISchema>();
             app.UseGraphQL<ISchema>();
             app.Run();
         }
@@ -31,7 +36,9 @@ namespace DragonAttack
             services.AddSingleton<CounterHolder>();
             services.AddSingleton<MutationResolvers>();
             services.AddSingleton<QueryResolvers>();
+            services.AddSingleton<SubscriptionResolvers>();
 
+            services.AddSingleton<IDocumentExecuter, SubscriptionDocumentExecuter>();
             services.AddSingleton<ISchema>(LoadSchema);
             GraphQL.MicrosoftDI.GraphQLBuilderExtensions.AddGraphQL(services)
                 .AddServer(true)
@@ -42,7 +49,8 @@ namespace DragonAttack
                     options.UnhandledExceptionDelegate = ctx => logger.LogError("{Error} occurred", ctx.OriginalException.Message);
                 })
                 .AddSystemTextJson()
-                .AddErrorInfoProvider(opt => opt.ExposeExceptionStackTrace = true);
+                .AddErrorInfoProvider(opt => opt.ExposeExceptionStackTrace = true)
+                .AddWebSockets();
         }
 
         private static Schema LoadSchema(IServiceProvider services)
@@ -60,8 +68,56 @@ namespace DragonAttack
                 builder.ServiceProvider = services;
                 builder.Types.Include<MutationResolvers>();
                 builder.Types.Include<QueryResolvers>();
+                builder.Types.Include<SubscriptionResolvers>();
+
+                var accessor = new SingleMethodAccessor(typeof(SubscriptionResolvers).GetMethod(nameof(SubscriptionResolvers.WatchCharacterStream)));
+                var subscriber = new EventStreamResolver(accessor, services);
+                var subField = builder.Types.For("Subscription").FieldFor("watchCharacter");
+                subField.Subscriber = subscriber;
+                subField.Resolver = new SourceFieldResolver<GameCharacter>();
             });
+            
             return schema;
+        }
+    }
+
+    class SourceFieldResolver<T> : IFieldResolver<T>
+    {
+        public T? Resolve(IResolveFieldContext context) => (T)context.Source;
+
+        object? IFieldResolver.Resolve(IResolveFieldContext context) => Resolve(context);
+    }
+
+    internal class SingleMethodAccessor : IAccessor
+    {
+        public SingleMethodAccessor(MethodInfo method)
+        {
+            MethodInfo = method;
+        }
+
+        public string FieldName => MethodInfo.Name;
+
+        public Type ReturnType => MethodInfo.ReturnType;
+
+        public Type DeclaringType => MethodInfo.DeclaringType;
+
+        public ParameterInfo[] Parameters => MethodInfo.GetParameters();
+
+        public MethodInfo MethodInfo { get; }
+
+        public IEnumerable<T> GetAttributes<T>() where T : Attribute => MethodInfo.GetCustomAttributes<T>();
+
+        public object? GetValue(object target, object?[]? arguments)
+        {
+            try
+            {
+                return MethodInfo.Invoke(target, arguments);
+            }
+            catch (TargetInvocationException ex)
+            {
+                ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
+                return null; // never executed, necessary only for intellisense
+            }
         }
     }
 }

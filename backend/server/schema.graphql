@@ -5,3 +5,15 @@ type Query {
 type Mutation {
     incrementCounter: Int!
 }
+
+type Subscription {
+    watchCharacter(id: ID!): GameCharacter
+}
+
+type GameCharacter {
+    id: ID!
+    
+    name: String!
+
+    healthPercent: Int!
+}

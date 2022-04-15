@@ -1,73 +1,76 @@
 using GraphQL;
+using Orleans;
+using Orleans.Streams;
 
 namespace DragonAttack
 {
     [GraphQL.GraphQLMetadata("Subscription")]
     public class SubscriptionResolvers
     {
-        private readonly CounterHolder holder;
         private readonly ILogger<SubscriptionResolvers> logger;
+        private readonly IClusterClient clusterClient;
 
-        public SubscriptionResolvers(CounterHolder holder, ILogger<SubscriptionResolvers> logger)
+        public SubscriptionResolvers(ILogger<SubscriptionResolvers> logger, IClusterClient clusterClient)
         {
-            this.holder = holder;
             this.logger = logger;
-        }
-
-        public GameCharacter WatchCharacter(GameCharacter source)
-        {
-            logger.LogInformation("Resolving to myself");
-            return source;
+            this.clusterClient = clusterClient;
         }
 
         public IObservable<GameCharacter> WatchCharacterStream(string id)
         {
             logger.LogInformation("Watching character {id}", id);
-            return new GameCharacterObserable(id, holder, logger);
-        }
-    }
-
-    public class GameCharacterObserable : IObservable<GameCharacter>
-    {
-        private readonly string characterId;
-        private readonly CounterHolder holder;
-        private readonly ILogger<SubscriptionResolvers> logger;
-
-        public GameCharacterObserable(string characterId, CounterHolder holder, ILogger<SubscriptionResolvers> logger)
-        {
-            this.characterId = characterId;
-            this.holder = holder;
-            this.logger = logger;
+            var streamProvider = clusterClient.GetStreamProvider("default");
+            var stream = streamProvider.GetStream<GameCharacter>(Guid.Empty, "GameCharacter");
+            logger.LogInformation("Got stream: {stream}", stream);
+            return new GameCharacterStreamWrapper(stream, logger);
         }
 
-        public IDisposable Subscribe(IObserver<GameCharacter> observer)
+        private class GameCharacterStreamWrapper : IObservable<GameCharacter>
         {
-            EventHandler<int> handler = (sender, newValue) => 
+            private readonly IAsyncStream<GameCharacter> stream;
+            private readonly ILogger<SubscriptionResolvers> logger;
+
+            public GameCharacterStreamWrapper(IAsyncStream<GameCharacter> stream, ILogger<SubscriptionResolvers> logger)
             {
-                logger.LogInformation("Handling event for {value}", newValue);
-                observer.OnNext(new GameCharacter
+                this.stream = stream;
+                this.logger = logger;
+            }
+
+            public IDisposable Subscribe(IObserver<GameCharacter> observer)
+            {
+                logger.LogInformation("Subscribing observer");
+                var task = SubscribeAsync(observer);
+                task.Wait();
+                logger.LogInformation("Subscribed observer");
+                return task.Result;
+            }
+
+            private async Task<IDisposable> SubscribeAsync(IObserver<GameCharacter> observer)
+            {
+                Func<GameCharacter, StreamSequenceToken, Task> onNext = (value, token) =>
                 {
-                    Id = characterId,
-                    Name = "[name here]",
-                    HealthPercent = newValue
-                });
-            };
-            holder.OnCounterChanged += handler;
-            return new UnSubscriber(holder, handler);
+                    observer.OnNext(value);
+                    return Task.CompletedTask;
+                };
+                var streamSubscriptionHandle = await stream.SubscribeAsync(onNext);
+                return new UnSubscriber(streamSubscriptionHandle);
+            }
+
+            private class UnSubscriber : IDisposable
+            {
+                private readonly StreamSubscriptionHandle<GameCharacter> handle;
+
+                public UnSubscriber(StreamSubscriptionHandle<GameCharacter> handle)
+                {
+                    this.handle = handle;
+                }
+
+                public void Dispose()
+                {
+                    handle.UnsubscribeAsync();
+                }
+            }
+
         }
-    }
-
-    public class UnSubscriber : IDisposable
-    {
-        private readonly EventHandler<int> handler;
-        private readonly CounterHolder holder;
-
-        public UnSubscriber(CounterHolder holder, EventHandler<int> handler)
-        {
-            this.holder = holder;
-            this.handler = handler;
-        }
-
-        public void Dispose() => holder.OnCounterChanged -= handler;
     }
 }

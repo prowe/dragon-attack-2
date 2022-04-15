@@ -8,4 +8,9 @@ namespace DragonAttack
         public string? Name { get; set; }
         public int HealthPercent { get; set; }
     }
+
+    public class IGameCharacterGrain
+    {
+        
+    }
 }

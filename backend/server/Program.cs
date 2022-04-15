@@ -5,6 +5,7 @@ using GraphQL.Reflection;
 using GraphQL.Resolvers;
 using GraphQL.Server;
 using GraphQL.Types;
+using Orleans.Hosting;
 
 namespace DragonAttack
 {
@@ -13,6 +14,7 @@ namespace DragonAttack
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            ConfigureOrleans(builder);
             ConfigureServices(builder.Services);
 
             var app = builder.Build();
@@ -51,6 +53,16 @@ namespace DragonAttack
                 .AddSystemTextJson()
                 .AddErrorInfoProvider(opt => opt.ExposeExceptionStackTrace = true)
                 .AddWebSockets();
+        }
+
+        private static void ConfigureOrleans(WebApplicationBuilder builder)
+        {
+            builder.Host.UseOrleans(siloBuilder =>
+            {
+                siloBuilder.UseLocalhostClustering();
+                siloBuilder.AddSimpleMessageStreamProvider("default");
+                siloBuilder.AddMemoryGrainStorage("PubSubStore");
+            });
         }
 
         private static Schema LoadSchema(IServiceProvider services)

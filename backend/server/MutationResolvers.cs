@@ -5,23 +5,19 @@ namespace DragonAttack
     [GraphQL.GraphQLMetadata("Mutation")]
     public class MutationResolvers
     {
-        private readonly CounterHolder holder;
         private readonly IClusterClient clusterClient;
         private readonly ILogger<MutationResolvers> logger;
 
-        public MutationResolvers(ILogger<MutationResolvers> logger, CounterHolder holder, IClusterClient clusterClient)
+        public MutationResolvers(ILogger<MutationResolvers> logger, IClusterClient clusterClient)
         {
             this.logger = logger;
-            this.holder = holder;
             this.clusterClient = clusterClient;
         }
 
-        public async Task<int> IncrementCounter()
+        public async Task<int> AttackWithAbility(Guid targetId, string abilityId)
         {
-            return await clusterClient.GetGrain<ICounter>(33).Increment();
-            // var newValue = holder.Counter++;
-            // logger.LogInformation("Incremented to: {value}", newValue);
-            // return newValue;
+            var playerId = Guid.Parse("1DA1118C-8004-4641-A031-13B624F795D5");
+            return await clusterClient.GetGrain<IGameCharacterGrain>(playerId).AttackWithAbility(targetId, abilityId);
         }
     }
 }

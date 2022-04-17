@@ -35,7 +35,6 @@ namespace DragonAttack
         private static void ConfigureServices(IServiceCollection services)
         {
             services.AddCors();
-            services.AddSingleton<CounterHolder>();
             services.AddSingleton<MutationResolvers>();
             services.AddSingleton<QueryResolvers>();
             services.AddSingleton<SubscriptionResolvers>();

@@ -16,11 +16,11 @@ namespace DragonAttack
             this.clusterClient = clusterClient;
         }
 
-        public IObservable<GameCharacter> WatchCharacterStream(string id)
+        public IObservable<GameCharacter> WatchCharacterStream(Guid id)
         {
             logger.LogInformation("Watching character {id}", id);
             var streamProvider = clusterClient.GetStreamProvider("default");
-            var stream = streamProvider.GetStream<GameCharacter>(Guid.Empty, "GameCharacter");
+            var stream = streamProvider.GetStream<GameCharacter>(id, "GameCharacter");
             logger.LogInformation("Got stream: {stream}", stream);
             return new GameCharacterStreamWrapper(stream, logger);
         }

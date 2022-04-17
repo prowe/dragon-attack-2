@@ -4,6 +4,10 @@ type Query {
 
 type Mutation {
     incrementCounter: Int!
+
+    attackWithAbility (
+        targetId: String!, 
+        abilityId: String!): Int!
 }
 
 type Subscription {

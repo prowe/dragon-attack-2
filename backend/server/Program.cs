@@ -85,7 +85,10 @@ namespace DragonAttack
                 var subscriber = new EventStreamResolver(accessor, services);
                 var subField = builder.Types.For("Subscription").FieldFor("watchCharacter");
                 subField.Subscriber = subscriber;
-                subField.Resolver = new SourceFieldResolver<GameCharacter>();
+                subField.Resolver = new SourceFieldResolver<IGameCharacterEvent>();
+
+                builder.Types.For("AttackedEvent").IsTypeOf<AttackedEvent>();
+                builder.Types.For("GameCharacterEvent").IsTypeOf<IGameCharacterEvent>();
             });
             
             return schema;

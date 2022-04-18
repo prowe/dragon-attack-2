@@ -11,13 +11,12 @@ type Mutation {
 }
 
 type Subscription {
-    watchCharacter(id: ID!): GameCharacter
+    watchCharacter(id: ID!): GameCharacterEvent
 }
 
-type GameCharacter {
-    id: ID!
-    
-    name: String!
+union GameCharacterEvent = AttackedEvent
 
-    healthPercent: Int!
+type AttackedEvent {
+    damage: Int!
+    resultingHealthPercent: Int!
 }

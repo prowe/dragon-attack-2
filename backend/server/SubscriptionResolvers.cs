@@ -16,27 +16,27 @@ namespace DragonAttack
             this.clusterClient = clusterClient;
         }
 
-        public IObservable<GameCharacter> WatchCharacterStream(Guid id)
+        public IObservable<IGameCharacterEvent> WatchCharacterStream(Guid id)
         {
             logger.LogInformation("Watching character {id}", id);
             var streamProvider = clusterClient.GetStreamProvider("default");
-            var stream = streamProvider.GetStream<GameCharacter>(id, "GameCharacter");
+            var stream = streamProvider.GetStream<IGameCharacterEvent>(id, nameof(IGameCharacterEvent));
             logger.LogInformation("Got stream: {stream}", stream);
             return new GameCharacterStreamWrapper(stream, logger);
         }
 
-        private class GameCharacterStreamWrapper : IObservable<GameCharacter>
+        private class GameCharacterStreamWrapper : IObservable<IGameCharacterEvent>
         {
-            private readonly IAsyncStream<GameCharacter> stream;
+            private readonly IAsyncStream<IGameCharacterEvent> stream;
             private readonly ILogger<SubscriptionResolvers> logger;
 
-            public GameCharacterStreamWrapper(IAsyncStream<GameCharacter> stream, ILogger<SubscriptionResolvers> logger)
+            public GameCharacterStreamWrapper(IAsyncStream<IGameCharacterEvent> stream, ILogger<SubscriptionResolvers> logger)
             {
                 this.stream = stream;
                 this.logger = logger;
             }
 
-            public IDisposable Subscribe(IObserver<GameCharacter> observer)
+            public IDisposable Subscribe(IObserver<IGameCharacterEvent> observer)
             {
                 logger.LogInformation("Subscribing observer");
                 var task = SubscribeAsync(observer);
@@ -45,22 +45,22 @@ namespace DragonAttack
                 return task.Result;
             }
 
-            private async Task<IDisposable> SubscribeAsync(IObserver<GameCharacter> observer)
+            private async Task<IDisposable> SubscribeAsync(IObserver<IGameCharacterEvent> observer)
             {
-                Func<GameCharacter, StreamSequenceToken, Task> onNext = (value, token) =>
+                Func<IGameCharacterEvent, StreamSequenceToken, Task> onNext = (value, token) =>
                 {
                     observer.OnNext(value);
                     return Task.CompletedTask;
                 };
                 var streamSubscriptionHandle = await stream.SubscribeAsync(onNext);
-                return new UnSubscriber(streamSubscriptionHandle);
+                return new UnSubscriber<IGameCharacterEvent>(streamSubscriptionHandle);
             }
 
-            private class UnSubscriber : IDisposable
+            private class UnSubscriber<T> : IDisposable
             {
-                private readonly StreamSubscriptionHandle<GameCharacter> handle;
+                private readonly StreamSubscriptionHandle<T> handle;
 
-                public UnSubscriber(StreamSubscriptionHandle<GameCharacter> handle)
+                public UnSubscriber(StreamSubscriptionHandle<T> handle)
                 {
                     this.handle = handle;
                 }

@@ -4,11 +4,14 @@ using Orleans.Streams;
 
 namespace DragonAttack
 {
-    public class GameCharacter
+    public interface IGameCharacterEvent
     {
-        public Guid Id { get; set; }
-        public string Name { get; set; }
-        public int HealthPercent { get; set; }
+    }
+
+    public class AttackedEvent : IGameCharacterEvent
+    {
+        public int Damage { get; set; }
+        public int ResultingHealthPercent { get; set; }
     }
 
     public interface IGameCharacterGrain : IGrainWithGuidKey
@@ -31,14 +34,9 @@ namespace DragonAttack
             this.clusterClient = clusterClient;
         }
 
-        private IAsyncStream<GameCharacter> GameCharacterStream
-        {
-            get
-            {
-                var streamProvider = clusterClient.GetStreamProvider("default");
-                return streamProvider.GetStream<GameCharacter>(this.GetPrimaryKey(), "GameCharacter");
-            }
-        }
+        private IAsyncStream<IGameCharacterEvent> EventStream => clusterClient
+            .GetStreamProvider("default")
+            .GetStream<IGameCharacterEvent>(this.GetPrimaryKey(), nameof(IGameCharacterEvent));
        
         public async Task<int> AttackWithAbility(Guid targetCharacterId, string abilityId)
         {
@@ -54,13 +52,13 @@ namespace DragonAttack
         {
             currentHitPoints = Math.Max(0, currentHitPoints - damage);
             logger.LogInformation("Took {damage} damage. Down to {currentHitPoints} HP", damage, currentHitPoints);
-            var damageEvent = new GameCharacter
+            int healthPercent = currentHitPoints * 100 / maxHitPoints;
+
+            await EventStream.OnNextAsync(new AttackedEvent
             {
-                Id = this.GetPrimaryKey(),
-                Name = "Unknown",
-                HealthPercent = currentHitPoints * 100 / maxHitPoints
-            };
-            await GameCharacterStream.OnNextAsync(damageEvent);
+                Damage = damage,
+                ResultingHealthPercent = healthPercent
+            });
         }
     }
 }

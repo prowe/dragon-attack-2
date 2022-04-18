@@ -4,9 +4,10 @@ import { WatchCharacterSubscription, WatchCharacterSubscriptionVariables } from 
 const watchCharacterSubscription = gql`
     subscription WatchCharacter($characterId: ID!) {
         watchCharacter(id: $characterId) {
-            id
-            name
-            healthPercent
+            __typename
+            ... on AttackedEvent {
+                resultingHealthPercent
+            }
         }
     }
 `;
@@ -24,8 +25,8 @@ export default function CharacterStatusDisplay({characterId}: CharacterStatusDis
 
     return (
         <div>
-            <h5>{data?.watchCharacter?.name} {loading ?? '...'}</h5>
-            <div>{data?.watchCharacter?.healthPercent}%</div>
+            <h5>{loading ?? '...'}</h5>
+            <div>{data?.watchCharacter?.resultingHealthPercent}%</div>
         </div>
     );
 }

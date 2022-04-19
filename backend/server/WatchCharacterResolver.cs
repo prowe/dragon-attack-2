@@ -1,36 +1,47 @@
 using GraphQL;
+using GraphQL.Resolvers;
+using GraphQL.Utilities;
 using Orleans;
 using Orleans.Streams;
 
 namespace DragonAttack
 {
     [GraphQL.GraphQLMetadata("Subscription")]
-    public class SubscriptionResolvers
+    public class WatchCharacterResolver : ISourceStreamResolver
     {
-        private readonly ILogger<SubscriptionResolvers> logger;
+        private readonly ILogger<WatchCharacterResolver> logger;
         private readonly IClusterClient clusterClient;
 
-        public SubscriptionResolvers(ILogger<SubscriptionResolvers> logger, IClusterClient clusterClient)
+        public WatchCharacterResolver(ILogger<WatchCharacterResolver> logger, IClusterClient clusterClient)
         {
             this.logger = logger;
             this.clusterClient = clusterClient;
         }
 
-        public IObservable<IGameCharacterEvent> WatchCharacterStream(Guid id)
+        public void ConfigureField(TypeSettings types)
         {
+            var field = types.For("Subscription").FieldFor("watchCharacter");
+            field.StreamResolver = this;
+            field.Resolver = new ExpressionFieldResolver<IGameCharacterEvent, IGameCharacterEvent>(ev => ev);
+        }
+
+        public ValueTask<IObservable<object?>> ResolveAsync(IResolveFieldContext context)
+        {
+            var id = context.GetArgument<Guid>("id");
             logger.LogInformation("Watching character {id}", id);
             var streamProvider = clusterClient.GetStreamProvider("default");
             var stream = streamProvider.GetStream<IGameCharacterEvent>(id, nameof(IGameCharacterEvent));
             logger.LogInformation("Got stream: {stream}", stream);
-            return new GameCharacterStreamWrapper(stream, logger);
+            IObservable<object?> observable = new GameCharacterStreamWrapper(stream, logger);
+            return ValueTask.FromResult(observable);
         }
 
         private class GameCharacterStreamWrapper : IObservable<IGameCharacterEvent>
         {
             private readonly IAsyncStream<IGameCharacterEvent> stream;
-            private readonly ILogger<SubscriptionResolvers> logger;
+            private readonly ILogger<WatchCharacterResolver> logger;
 
-            public GameCharacterStreamWrapper(IAsyncStream<IGameCharacterEvent> stream, ILogger<SubscriptionResolvers> logger)
+            public GameCharacterStreamWrapper(IAsyncStream<IGameCharacterEvent> stream, ILogger<WatchCharacterResolver> logger)
             {
                 this.stream = stream;
                 this.logger = logger;

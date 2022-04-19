@@ -1,5 +1,6 @@
 using GraphQL;
 using GraphQL.Resolvers;
+using GraphQL.Server.Transports.Subscriptions.Abstractions;
 using GraphQL.Utilities;
 using Orleans;
 using Orleans.Streams;
@@ -27,6 +28,11 @@ namespace DragonAttack
 
         public ValueTask<IObservable<object?>> ResolveAsync(IResolveFieldContext context)
         {
+            // var messageHandlingContext = (MessageHandlingContext)context.UserContext;
+            // logger.LogInformation("Context: {keys}", string.Join(',', messageHandlingContext.Properties.Keys));
+
+            // var playerContext = messageHandlingContext.Get<PlayerContext>("player");
+
             var id = context.GetArgument<Guid>("id");
             logger.LogInformation("Watching character {id}", id);
             var streamProvider = clusterClient.GetStreamProvider("default");

@@ -5,6 +5,7 @@ using GraphQL.Server;
 using GraphQL.SystemTextJson;
 using GraphQL.Types;
 using Orleans.Hosting;
+using IOperationMessageListener = GraphQL.Server.Transports.Subscriptions.Abstractions.IOperationMessageListener;
 
 namespace DragonAttack
 {
@@ -37,13 +38,13 @@ namespace DragonAttack
             services.AddSingleton<MutationResolvers>();
             services.AddSingleton<QueryResolvers>();
             services.AddSingleton<WatchCharacterResolver>();
+            services.AddSingleton<IOperationMessageListener, PlayerContextListener>();
 
             services.AddSingleton<ISchema>(LoadSchema);
             services.AddGraphQL(builder => builder
                 // .AddServer(true)
                 .AddHttpMiddleware<ISchema>()
                 .AddWebSocketsHttpMiddleware<ISchema>()
-                // For subscriptions support
                 .ConfigureExecutionOptions(options =>
                 {
                     options.EnableMetrics = true;

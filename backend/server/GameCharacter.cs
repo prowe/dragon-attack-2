@@ -50,13 +50,14 @@ namespace DragonAttack
 
         public async Task TakeDamage(int damage)
         {
-            currentHitPoints = Math.Max(0, currentHitPoints - damage);
-            logger.LogInformation("Took {damage} damage. Down to {currentHitPoints} HP", damage, currentHitPoints);
+            var damageTaken = Math.Min(currentHitPoints, damage);
+            currentHitPoints -= damageTaken;
+            logger.LogInformation("Took {damage} damage. Down to {currentHitPoints} HP", damageTaken, currentHitPoints);
             int healthPercent = currentHitPoints * 100 / maxHitPoints;
 
             await EventStream.OnNextAsync(new AttackedEvent
             {
-                Damage = damage,
+                Damage = damageTaken,
                 ResultingHealthPercent = healthPercent
             });
         }

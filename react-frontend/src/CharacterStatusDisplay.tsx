@@ -1,22 +1,22 @@
-import { gql, useSubscription } from "@apollo/client";
-import { WatchCharacterDocument, WatchCharacterSubscription, WatchCharacterSubscriptionVariables } from "./generated/graphql";
+import { useSubscription } from "@apollo/client";
+import { WatchCharacterDocument } from "./generated/graphql";
 
 export interface CharacterStatusDisplayProps {
-    characterId: string;
+    target: {id: string, name: string};
 }
 
-export default function CharacterStatusDisplay({characterId}: CharacterStatusDisplayProps) {
+export default function CharacterStatusDisplay({target}: CharacterStatusDisplayProps) {
     const {data, loading, error} = useSubscription(WatchCharacterDocument, {
         variables: {
-            characterId
+            characterId: target.id
         }
     });
 
     return (
         <div>
-            <h5>{loading ?? '...'}</h5>
-            {error && error.message}
+            <h5>{target.name}{loading ?? '...'}</h5>
             <div>{data?.watchCharacter?.resultingHealthPercent}%</div>
+            {error && error.message}
         </div>
     );
 }

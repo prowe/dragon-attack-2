@@ -14,9 +14,23 @@ namespace DragonAttack
             this.clusterClient = clusterClient;
         }
 
-        public async Task<int> AttackWithAbility(Guid targetId, string abilityId)
+        public async Task<GameCharacter> JoinGame(string name)
         {
-            var playerId = Guid.Parse("1DA1118C-8004-4641-A031-13B624F795D5");
+            var id = Guid.NewGuid();
+            logger.LogInformation("Joining game {id} = {name}", id, name);
+            var player = new GameCharacter
+            {
+                Id = id,
+                Name = name,
+                TotalHitPoints = 100,
+                CurrentHitPoints = 100,
+            };
+            await clusterClient.GetGrain<IGameCharacterGrain>(id).Spawn(player);
+            return player;
+        }
+
+        public async Task<int> AttackWithAbility(Guid playerId, Guid targetId, string abilityId)
+        {
             return await clusterClient.GetGrain<IGameCharacterGrain>(playerId).AttackWithAbility(targetId, abilityId);
         }
     }

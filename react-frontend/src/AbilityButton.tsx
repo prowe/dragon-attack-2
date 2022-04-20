@@ -2,12 +2,14 @@ import { useMutation } from "@apollo/client";
 import { AttackWithAbilityDocument } from "./generated/graphql";
 
 export interface AbilityButtonProps {
-    targetId: string
+    playerId: string;
+    targetId: string;
 }
 
-export default function AbilityButton({targetId}: AbilityButtonProps) {
+export default function AbilityButton({playerId, targetId}: AbilityButtonProps) {
     const [executeAbility] = useMutation(AttackWithAbilityDocument, {
         variables: {
+            playerId,
             targetId,
             abilityId: 'stab'
         }

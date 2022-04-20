@@ -22,7 +22,6 @@ const apolloClient = new ApolloClient({
 
 function App() {
   const [player, setPlayer] = useState<JoinGameMutation['joinGame'] | null>(null);
-  const targetId = '78D6A1E6-F6A0-4A71-AE46-E86881B9B527';
 
   return (
     <div className="App">

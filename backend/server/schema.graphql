@@ -6,7 +6,8 @@ type Mutation {
     joinGame(name: String!): GameCharacter!
 
     attackWithAbility (
-        targetId: String!, 
+        playerId: String!,
+        targetId: String!,
         abilityId: String!): Int!
 }
 

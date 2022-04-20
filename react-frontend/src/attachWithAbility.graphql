@@ -1,0 +1,5 @@
+mutation AttackWithAbility(
+    $targetId: String!, 
+    $abilityId: String!) {
+    attackWithAbility (targetId: $targetId, abilityId: $abilityId)
+}

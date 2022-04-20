@@ -3,7 +3,7 @@ type Query {
 }
 
 type Mutation {
-    incrementCounter: Int!
+    joinGame(name: String!): GameCharacter!
 
     attackWithAbility (
         targetId: String!, 
@@ -12,6 +12,11 @@ type Mutation {
 
 type Subscription {
     watchCharacter(id: ID!): GameCharacterEvent
+}
+
+type GameCharacter {
+    id: ID!
+    name: String!
 }
 
 union GameCharacterEvent = AttackedEvent

@@ -1,0 +1,6 @@
+mutation JoinGame($name: String!) {
+    joinGame(name: $name) {
+        id
+        name
+    }
+}

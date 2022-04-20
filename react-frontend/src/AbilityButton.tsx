@@ -1,21 +1,12 @@
-import { gql, useMutation } from "@apollo/client";
-import { AttackWithAbilityMutation } from "./generated/graphql";
-
-const AttackWithAbility = gql`
-    mutation AttackWithAbility(
-        $targetId: String!, 
-        $abilityId: String!
-    ) {
-        attackWithAbility (targetId: $targetId, abilityId: $abilityId)
-    }
-`;
+import { useMutation } from "@apollo/client";
+import { AttackWithAbilityDocument } from "./generated/graphql";
 
 export interface AbilityButtonProps {
     targetId: string
 }
 
 export default function AbilityButton({targetId}: AbilityButtonProps) {
-    const [executeAbility] = useMutation<AttackWithAbilityMutation>(AttackWithAbility, {
+    const [executeAbility] = useMutation(AttackWithAbilityDocument, {
         variables: {
             targetId,
             abilityId: 'stab'

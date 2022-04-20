@@ -17,6 +17,9 @@ namespace DragonAttack
         }
     }
 
+    public class AlreadySpawnedException : Exception
+    {}
+
     public interface IGameCharacterEvent
     {
     }
@@ -54,6 +57,10 @@ namespace DragonAttack
 
         public Task Spawn(GameCharacter gameCharacter)
         {
+            if (State != null)
+            {
+                throw new AlreadySpawnedException();
+            }
             State = gameCharacter;
             logger.LogInformation("Spawned character {character}", gameCharacter);
             return Task.CompletedTask;
@@ -64,7 +71,7 @@ namespace DragonAttack
             logger.LogInformation("Attacking {target}", targetCharacterId);
             // TODO: lookup ability and calculate damage
             var target = GrainFactory.GetGrain<IGameCharacterGrain>(targetCharacterId);
-            var damage = 1;
+            var damage = Random.Shared.Next(10) + 1;
             await target.TakeDamage(damage);
             return damage;
         }

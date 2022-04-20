@@ -4,6 +4,7 @@ using GraphQL.MicrosoftDI;
 using GraphQL.Server;
 using GraphQL.SystemTextJson;
 using GraphQL.Types;
+using Orleans;
 using Orleans.Hosting;
 using IOperationMessageListener = GraphQL.Server.Transports.Subscriptions.Abstractions.IOperationMessageListener;
 
@@ -59,6 +60,8 @@ namespace DragonAttack
                 .AddErrorInfoProvider(opt => opt.ExposeExceptionStackTrace = true)
                 .AddWebSockets()
             );
+
+            services.AddHostedService<DragonSpawner>();
         }
 
         private static void ConfigureOrleans(WebApplicationBuilder builder)

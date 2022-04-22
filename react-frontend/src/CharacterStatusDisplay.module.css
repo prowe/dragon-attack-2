@@ -1,0 +1,7 @@
+.statusContainer {
+    border: solid black thin;
+}
+
+.statusContainer[aria-selected='true'] {
+    background-color: gold;
+}

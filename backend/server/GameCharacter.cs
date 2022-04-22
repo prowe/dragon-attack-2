@@ -78,6 +78,10 @@ namespace DragonAttack
 
         public async Task TakeDamage(int damage)
         {
+            if (State == null)
+            {
+                throw new Exception("State for character is null");
+            }
             var damageTaken = Math.Min(State.CurrentHitPoints, damage);
             State.CurrentHitPoints -= damageTaken;
             logger.LogInformation("Took {damage} damage. Down to {currentHitPoints} HP", damageTaken, State.CurrentHitPoints);

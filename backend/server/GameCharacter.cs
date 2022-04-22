@@ -55,15 +55,22 @@ namespace DragonAttack
             .GetStreamProvider("default")
             .GetStream<IGameCharacterEvent>(this.GetPrimaryKey(), nameof(IGameCharacterEvent));
 
-        public Task Spawn(GameCharacter gameCharacter)
+        public async Task Spawn(GameCharacter gameCharacter)
         {
             if (State != null)
             {
                 throw new AlreadySpawnedException();
             }
             State = gameCharacter;
+            await clusterClient
+                .GetStreamProvider("default")
+                .GetStream<IAreaEvent>(IAreaGrain.StartingArea, nameof(IAreaGrain))
+                .OnNextAsync(new CharacterEnteredAreaEvent
+                {
+                    AreaId = IAreaGrain.StartingArea,
+                    GameCharacterId = gameCharacter.Id
+                });
             logger.LogInformation("Spawned character {character}", gameCharacter);
-            return Task.CompletedTask;
         }
        
         public async Task<int> AttackWithAbility(Guid targetCharacterId, string abilityId)

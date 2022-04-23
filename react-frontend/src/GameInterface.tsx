@@ -15,8 +15,8 @@ export default function GameInterface({player}: GameInterfaceProps) {
             <h1>Welcome {player.name}!</h1>
 
             <ul>
-                <li><CharacterStatusDisplay currentTargetId={targetId} setTarget={setTargetId} gameCharacter={player} /></li>
-                <li><CharacterStatusDisplay currentTargetId={targetId} setTarget={setTargetId} gameCharacter={{id: '78D6A1E6-F6A0-4A71-AE46-E86881B9B527', name: 'Target'}} /></li>
+                {player.location.charactersPresent
+                    .map(c => <CharacterStatusDisplay key={c.id} currentTargetId={targetId} setTarget={setTargetId} gameCharacter={c} />)}
             </ul>
 
             <section>

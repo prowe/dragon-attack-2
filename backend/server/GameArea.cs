@@ -1,17 +1,26 @@
 using Orleans;
 using Orleans.Streams;
 using Orleans.Core;
+using GraphQL;
 
 namespace DragonAttack
 {
     public class Area {
         public Guid Id { get; set; }
         public string Name { get; set; }
+        public HashSet<Guid> CharactersPresentIds { get; } = new HashSet<Guid>();
+
+        public Task<GameCharacter[]> CharactersPresent([FromServices] IClusterClient clusterClient)
+        {
+            return Task.WhenAll(CharactersPresentIds.Select(id => clusterClient.GetGrain<IGameCharacterGrain>(id).GetState()));
+        }
     }
 
     public interface IAreaGrain : IGrainWithGuidKey
     {
         public static readonly Guid StartingArea = Guid.Parse("3A3F5245-BE2F-4DC8-AEE1-1EDB84025F17");
+
+        public Task<Area> GetState();
     }
 
     public interface IAreaEvent
@@ -35,7 +44,7 @@ namespace DragonAttack
     {
         private readonly ILogger<AreaGrain> logger;
         private readonly IClusterClient clusterClient;
-        private readonly HashSet<Guid> charactersPresent = new HashSet<Guid>();
+        private Area State { get; set; }
 
         public AreaGrain(IClusterClient clusterClient, ILogger<AreaGrain> logger)
         {
@@ -45,13 +54,22 @@ namespace DragonAttack
 
         public override async Task OnActivateAsync()
         {
+            State = new Area
+            {
+                Id = this.GetPrimaryKey(),
+                Name = "Starting Area",
+            };
+
             var streamProvider = base.GetStreamProvider("default");
             var stream = streamProvider.GetStream<IAreaEvent>(this.GetPrimaryKey(), nameof(IAreaGrain));
             var subscription = await stream.SubscribeAsync(this);
             await base.OnActivateAsync();
         }
 
+        public Task<Area> GetState() => Task.FromResult(State ?? throw new NullReferenceException());
+
         public Task OnCompletedAsync() => Task.CompletedTask;
+
         public Task OnErrorAsync(Exception ex) => Task.CompletedTask;
         
         public Task OnNextAsync(IAreaEvent item, StreamSequenceToken? token = null)
@@ -60,12 +78,14 @@ namespace DragonAttack
             switch (item)
             {
                 case CharacterEnteredAreaEvent enteredAreaEvent:
-                    charactersPresent.Add(enteredAreaEvent.GameCharacterId);
+                    State.CharactersPresentIds.Add(enteredAreaEvent.GameCharacterId);
                     break;
                 default:
                     break;
             }
             return Task.CompletedTask;
         }
+
+        
     }
 }

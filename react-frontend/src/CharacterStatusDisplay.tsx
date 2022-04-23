@@ -17,10 +17,10 @@ export default function CharacterStatusDisplay({gameCharacter, currentTargetId, 
     });
 
     return (
-        <div className={styles.statusContainer} aria-selected={characterId === currentTargetId} onClick={() => setTarget(characterId)}>
+        <li className={styles.statusContainer} aria-selected={characterId === currentTargetId} onClick={() => setTarget(characterId)}>
             <h5>{gameCharacter.name}{loading ?? '...'}</h5>
             <div>{data?.watchCharacter?.resultingHealthPercent}%</div>
             {error && error.message}
-        </div>
+        </li>
     );
 }

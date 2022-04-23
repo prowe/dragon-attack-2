@@ -11,6 +11,12 @@ namespace DragonAttack
         public int TotalHitPoints { get; set; }
         public int CurrentHitPoints { get; set; }
         public Guid LocationAreaId { get; set; }
+
+        public Task<Area> Location([FromServices] IClusterClient clusterClient)
+        {
+            return clusterClient.GetGrain<IAreaGrain>(LocationAreaId).GetState();
+        }  
+
         public int CurrentHealthPercent => CurrentHitPoints * 100 / TotalHitPoints;
 
         public override string ToString()
@@ -34,6 +40,8 @@ namespace DragonAttack
 
     public interface IGameCharacterGrain : IGrainWithGuidKey
     {
+        public Task<GameCharacter> GetState();
+        
         Task Spawn(GameCharacter player);
 
         public Task<int> AttackWithAbility(Guid targetCharacterId, string abilityId);

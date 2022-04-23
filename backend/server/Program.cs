@@ -95,6 +95,9 @@ namespace DragonAttack
 
                 builder.Types.For("AttackedEvent").IsTypeOf<AttackedEvent>();
                 builder.Types.For("GameCharacterEvent").IsTypeOf<IGameCharacterEvent>();
+
+                builder.Types.For(nameof(CharacterEnteredAreaEvent)).IsTypeOf<CharacterEnteredAreaEvent>();
+                builder.Types.For("AreaEvent").IsTypeOf<IAreaEvent>();
             });
             
             return schema;

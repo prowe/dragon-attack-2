@@ -10,6 +10,8 @@ namespace DragonAttack
         public string Name { get; set; }
         public int TotalHitPoints { get; set; }
         public int CurrentHitPoints { get; set; }
+        public Guid LocationAreaId { get; set; }
+        public int CurrentHealthPercent => CurrentHitPoints * 100 / TotalHitPoints;
 
         public override string ToString()
         {
@@ -55,6 +57,8 @@ namespace DragonAttack
             .GetStreamProvider("default")
             .GetStream<IGameCharacterEvent>(this.GetPrimaryKey(), nameof(IGameCharacterEvent));
 
+        public Task<GameCharacter> GetState() => Task.FromResult(State ?? throw new NullReferenceException());
+
         public async Task Spawn(GameCharacter gameCharacter)
         {
             if (State != null)
@@ -67,12 +71,12 @@ namespace DragonAttack
                 .GetStream<IAreaEvent>(IAreaGrain.StartingArea, nameof(IAreaGrain))
                 .OnNextAsync(new CharacterEnteredAreaEvent
                 {
-                    AreaId = IAreaGrain.StartingArea,
+                    AreaId = gameCharacter.LocationAreaId,
                     GameCharacterId = gameCharacter.Id
                 });
             logger.LogInformation("Spawned character {character}", gameCharacter);
         }
-       
+
         public async Task<int> AttackWithAbility(Guid targetCharacterId, string abilityId)
         {
             logger.LogInformation("Attacking {target}", targetCharacterId);
@@ -92,12 +96,11 @@ namespace DragonAttack
             var damageTaken = Math.Min(State.CurrentHitPoints, damage);
             State.CurrentHitPoints -= damageTaken;
             logger.LogInformation("Took {damage} damage. Down to {currentHitPoints} HP", damageTaken, State.CurrentHitPoints);
-            int healthPercent = State.CurrentHitPoints * 100 / State.TotalHitPoints;
 
             await EventStream.OnNextAsync(new AttackedEvent
             {
                 Damage = damageTaken,
-                ResultingHealthPercent = healthPercent
+                ResultingHealthPercent = State.CurrentHealthPercent
             });
         }
     }

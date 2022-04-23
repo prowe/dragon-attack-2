@@ -24,6 +24,7 @@ namespace DragonAttack
                 Name = name,
                 TotalHitPoints = 100,
                 CurrentHitPoints = 100,
+                LocationAreaId = IAreaGrain.StartingArea,
             };
             await clusterClient.GetGrain<IGameCharacterGrain>(id).Spawn(player);
             return player;

@@ -34,6 +34,8 @@ namespace DragonAttack
 
     public class AttackedEvent : IGameCharacterEvent
     {
+        public Guid Attacker { get; set; }
+        public Guid Target { get; set; }
         public int Damage { get; set; }
         public int ResultingHealthPercent { get; set; }
     }
@@ -42,7 +44,7 @@ namespace DragonAttack
     {
         public Task<GameCharacter> GetState();
         
-        Task Spawn(GameCharacter player);
+        Task Spawn(GameCharacter player, bool isPlayerCharacter);
 
         public Task<int> UseAbility(string abilityId, params Guid[] targetIds);
 
@@ -54,6 +56,8 @@ namespace DragonAttack
         private readonly ILogger<GameCharacterGrain> logger;
         private readonly IClusterClient clusterClient;
         private GameCharacter? State {get; set;}
+        private INPCController controller;
+        private IDisposable controllerTurnHandle;
 
         public GameCharacterGrain(ILogger<GameCharacterGrain> logger, IClusterClient clusterClient)
         {
@@ -67,22 +71,33 @@ namespace DragonAttack
 
         public Task<GameCharacter> GetState() => Task.FromResult(State ?? throw new NullReferenceException());
 
-        public async Task Spawn(GameCharacter gameCharacter)
+        public async Task Spawn(GameCharacter gameCharacter, bool isPlayerCharacter = false)
         {
             if (State != null)
             {
                 throw new AlreadySpawnedException();
             }
             State = gameCharacter;
+            if (!isPlayerCharacter)
+            {
+                SetupController();
+            }
+            var enterAreaEvent = new CharacterEnteredAreaEvent
+            {
+                AreaId = gameCharacter.LocationAreaId,
+                GameCharacterId = gameCharacter.Id
+            };
             await clusterClient
                 .GetStreamProvider("default")
-                .GetStream<IAreaEvent>(IAreaGrain.StartingArea, nameof(IAreaGrain))
-                .OnNextAsync(new CharacterEnteredAreaEvent
-                {
-                    AreaId = gameCharacter.LocationAreaId,
-                    GameCharacterId = gameCharacter.Id
-                });
+                .GetStream<IAreaEvent>(enterAreaEvent.AreaId, nameof(IAreaGrain))
+                .OnNextAsync(enterAreaEvent);
             logger.LogInformation("Spawned character {character}", gameCharacter);
+        }
+
+        private void SetupController()
+        {
+            controller = this.ServiceProvider.GetRequiredService<INPCController>();
+            controllerTurnHandle = RegisterTimer(obj => controller.TakeTurn(this), null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
         }
 
         public async Task<int> UseAbility(string abilityId, params Guid[] targetIds)
@@ -91,11 +106,23 @@ namespace DragonAttack
             var damages = await Task.WhenAll(targetIds.Select(async targetId =>
             {
                 var target = GrainFactory.GetGrain<IGameCharacterGrain>(targetId);
-                var damage = Random.Shared.Next(10) + 1;
+                var damage = CalculateDamage(abilityId);
                 await target.TakeDamage(damage, this.GetPrimaryKey());
                 return damage;
             }));
             return damages.Sum();
+        }
+
+        private int CalculateDamage(string abilityId)
+        {
+            // TODO: better way to do this
+            return abilityId switch
+            {
+                "stab" => Roll(10),
+                "claw" => Roll(5) + Roll(5),
+                "flame-breath" => Roll(10) + 5,
+                _ => 0,
+            };
         }
 
         public async Task TakeDamage(int damage, Guid sourceCharacterId)
@@ -108,11 +135,22 @@ namespace DragonAttack
             State.CurrentHitPoints -= damageTaken;
             logger.LogInformation("Took {damage} damage. Down to {currentHitPoints} HP", damageTaken, State.CurrentHitPoints);
 
-            await EventStream.OnNextAsync(new AttackedEvent
+            var attackedEvent = new AttackedEvent
             {
+                Attacker = sourceCharacterId,
+                Target = this.GetPrimaryKey(),
                 Damage = damageTaken,
                 ResultingHealthPercent = State.CurrentHealthPercent
-            });
+            };
+            controller?.OnDamageTaken(attackedEvent);
+            await EventStream.OnNextAsync(attackedEvent);
+        }
+
+        private static int Roll(int sides, int rolls = 1)
+        {
+            return Enumerable.Range(0, rolls)
+                .Select((int index) => Random.Shared.Next(sides) + 1)
+                .Sum();
         }
     }
 }

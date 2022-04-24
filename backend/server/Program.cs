@@ -41,6 +41,8 @@ namespace DragonAttack
             services.AddSingleton<WatchCharacterResolver>();
             services.AddSingleton<IOperationMessageListener, PlayerContextListener>();
 
+            services.AddTransient<INPCController, DragonController>();
+
             services.AddSingleton<ISchema>(LoadSchema);
             services.AddGraphQL(builder => builder
                 // .AddServer(true)

@@ -24,7 +24,8 @@ namespace DragonAttack
                     Name = "Dragon",
                     CurrentHitPoints = 1000,
                     TotalHitPoints = 1000,
-                });
+                    LocationAreaId = IAreaGrain.StartingArea,
+                }, false);
                 logger.LogWarning("Dragon spawned");
             } 
             catch (AlreadySpawnedException e)

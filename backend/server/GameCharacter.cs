@@ -44,9 +44,9 @@ namespace DragonAttack
         
         Task Spawn(GameCharacter player);
 
-        public Task<int> AttackWithAbility(Guid targetCharacterId, string abilityId);
+        public Task<int> UseAbility(string abilityId, params Guid[] targetIds);
 
-        public Task TakeDamage(int damage);
+        public Task TakeDamage(int damage, Guid sourceCharacterId);
     }
 
     public class GameCharacterGrain : Orleans.Grain, IGameCharacterGrain
@@ -85,17 +85,20 @@ namespace DragonAttack
             logger.LogInformation("Spawned character {character}", gameCharacter);
         }
 
-        public async Task<int> AttackWithAbility(Guid targetCharacterId, string abilityId)
+        public async Task<int> UseAbility(string abilityId, params Guid[] targetIds)
         {
-            logger.LogInformation("Attacking {target}", targetCharacterId);
-            // TODO: lookup ability and calculate damage
-            var target = GrainFactory.GetGrain<IGameCharacterGrain>(targetCharacterId);
-            var damage = Random.Shared.Next(10) + 1;
-            await target.TakeDamage(damage);
-            return damage;
+            logger.LogInformation("Attacking {targets}", targetIds);
+            var damages = await Task.WhenAll(targetIds.Select(async targetId =>
+            {
+                var target = GrainFactory.GetGrain<IGameCharacterGrain>(targetId);
+                var damage = Random.Shared.Next(10) + 1;
+                await target.TakeDamage(damage, this.GetPrimaryKey());
+                return damage;
+            }));
+            return damages.Sum();
         }
 
-        public async Task TakeDamage(int damage)
+        public async Task TakeDamage(int damage, Guid sourceCharacterId)
         {
             if (State == null)
             {

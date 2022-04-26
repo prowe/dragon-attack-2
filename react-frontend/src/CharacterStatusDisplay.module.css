@@ -1,5 +1,11 @@
 .statusContainer {
     border: solid black thin;
+    max-width: 50rem;
+    padding: 1rem;
+}
+.statusContainer > * {
+    display: block;
+    width: 100%;
 }
 
 .statusContainer[aria-selected='true'] {

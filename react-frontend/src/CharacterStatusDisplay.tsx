@@ -13,7 +13,8 @@ export default function CharacterStatusDisplay({gameCharacter, currentTargetId, 
     const {data, loading, error} = useSubscription(WatchCharacterDocument, {
         variables: {
             characterId
-        }
+        },
+        shouldResubscribe: true,
     });
     const currentHealthPercent = data?.watchCharacter?.resultingHealthPercent ?? gameCharacter.currentHealthPercent;
 
@@ -21,7 +22,7 @@ export default function CharacterStatusDisplay({gameCharacter, currentTargetId, 
         <li className={styles.statusContainer} aria-selected={characterId === currentTargetId} onClick={() => setTarget(characterId)}>
             <label>{gameCharacter.name}{loading ?? '...'}</label>
             {error && <div>{error.message}</div>}
-            <progress value={currentHealthPercent} max={100}>{currentHealthPercent}%</progress>
+            <progress value={currentHealthPercent} max={100} />
         </li>
     );
 }

@@ -7,8 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="GraphQL.Server.All" Version="6.0.0" />
-    <PackageReference Include="GraphQL.Server.Transports.Subscriptions.WebSockets" Version="6.0.0" />
     <PackageReference Include="HotChocolate.AspNetCore" Version="12.8.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
     <PackageReference Include="Microsoft.Orleans.Client" Version="3.6.1" />
@@ -18,9 +16,4 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Orleans.Server" Version="3.6.1" />
   </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="schema.graphql" />
-  </ItemGroup>
-
 </Project>

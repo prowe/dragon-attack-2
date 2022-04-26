@@ -1,6 +1,6 @@
 mutation AttackWithAbility(
-    $playerId: String!,
-    $targetId: String!, 
+    $playerId: ID!,
+    $targetId: ID!, 
     $abilityId: String!) {
     attackWithAbility(playerId: $playerId, targetId: $targetId, abilityId: $abilityId)
 }

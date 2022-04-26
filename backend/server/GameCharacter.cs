@@ -28,6 +28,7 @@ namespace DragonAttack
     public class AlreadySpawnedException : Exception
     {}
 
+    [UnionType("GameCharacterEvent")]
     public interface IGameCharacterEvent
     {
     }

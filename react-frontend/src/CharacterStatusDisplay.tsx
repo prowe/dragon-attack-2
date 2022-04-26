@@ -19,9 +19,9 @@ export default function CharacterStatusDisplay({gameCharacter, currentTargetId, 
 
     return (
         <li className={styles.statusContainer} aria-selected={characterId === currentTargetId} onClick={() => setTarget(characterId)}>
-            <h5>{gameCharacter.name}{loading ?? '...'}</h5>
-            <div>{currentHealthPercent}%</div>
-            {error && error.message}
+            <label>{gameCharacter.name}{loading ?? '...'}</label>
+            {error && <div>{error.message}</div>}
+            <progress value={currentHealthPercent} max={100}>{currentHealthPercent}%</progress>
         </li>
     );
 }

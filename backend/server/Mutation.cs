@@ -2,13 +2,12 @@ using Orleans;
 
 namespace DragonAttack
 {
-    [GraphQL.GraphQLMetadata("Mutation")]
-    public class MutationResolvers
+    public class Mutation
     {
         private readonly IClusterClient clusterClient;
-        private readonly ILogger<MutationResolvers> logger;
+        private readonly ILogger<Mutation> logger;
 
-        public MutationResolvers(ILogger<MutationResolvers> logger, IClusterClient clusterClient)
+        public Mutation(ILogger<Mutation> logger, IClusterClient clusterClient)
         {
             this.logger = logger;
             this.clusterClient = clusterClient;

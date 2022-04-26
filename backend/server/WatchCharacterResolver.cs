@@ -1,42 +1,45 @@
-using GraphQL;
-using GraphQL.Resolvers;
-using GraphQL.Server.Transports.Subscriptions.Abstractions;
-using GraphQL.Utilities;
+// using GraphQL;
+// using GraphQL.Resolvers;
+// using GraphQL.Server.Transports.Subscriptions.Abstractions;
+// using GraphQL.Utilities;
+using System.Threading.Channels;
+using HotChocolate.Execution;
+using HotChocolate.Subscriptions;
+using HotChocolate.Subscriptions.InMemory;
 using Orleans;
 using Orleans.Streams;
 
 namespace DragonAttack
 {
-    [GraphQL.GraphQLMetadata("Subscription")]
-    public class WatchCharacterResolver : ISourceStreamResolver
+    public class Subscription
     {
-        private readonly ILogger<WatchCharacterResolver> logger;
+        private readonly ILogger<Subscription> logger;
         private readonly IClusterClient clusterClient;
 
-        public WatchCharacterResolver(ILogger<WatchCharacterResolver> logger, IClusterClient clusterClient)
+        public Subscription(ILogger<Subscription> logger, IClusterClient clusterClient)
         {
             this.logger = logger;
             this.clusterClient = clusterClient;
         }
 
-        public void ConfigureField(TypeSettings types)
-        {
-            var field = types.For("Subscription").FieldFor("watchCharacter");
-            field.StreamResolver = this;
-            field.Resolver = new ExpressionFieldResolver<IGameCharacterEvent, IGameCharacterEvent>(ev => ev);
-        }
+        [Subscribe]
+        public GameCharacter WatchCharacter([EventMessage] GameCharacter gc) => gc;
 
-        public ValueTask<IObservable<object?>> ResolveAsync(IResolveFieldContext context)
-        {
-            var id = context.GetArgument<Guid>("id");
-            logger.LogInformation("Watching character {id}", id);
-            var streamProvider = clusterClient.GetStreamProvider("default");
-            var stream = streamProvider.GetStream<IGameCharacterEvent>(id, nameof(IGameCharacterEvent));
-            logger.LogInformation("Got stream: {stream}", stream);
-            IObservable<object?> observable = new StreamWrapper<IGameCharacterEvent>(stream);
-            return ValueTask.FromResult(observable);
-        }
-
-        
+        // [SubscribeAndResolve]
+        // public ValueTask<ISourceStream<IGameCharacterEvent>> WatchCharacter(Guid id)
+        // {
+        //     logger.LogInformation("Watching character {id}", id);
+        //     var channel = Channel.CreateBounded<IGameCharacterEvent>(100);
+            
+        //     var streamProvider = clusterClient.GetStreamProvider("default");
+        //     var stream = streamProvider.GetStream<IGameCharacterEvent>(id, nameof(IGameCharacterEvent));
+        //     stream.SubscribeAsync(async (IGameCharacterEvent ev, StreamSequenceToken token) => 
+        //     {
+        //         await channel.Writer.WriteAsync(ev);
+        //     });
+        //     // TODO: I think this leaks
+        //     ISourceStream<IGameCharacterEvent> sourceStream = new InMemorySourceStream<IGameCharacterEvent>(channel);
+        //     return ValueTask.FromResult(sourceStream);
+        // }
     }
 }

@@ -1,7 +1,6 @@
 using Orleans;
 using Orleans.Streams;
 using Orleans.Core;
-using GraphQL;
 
 namespace DragonAttack
 {
@@ -10,7 +9,7 @@ namespace DragonAttack
         public string Name { get; set; }
         public HashSet<Guid> CharactersPresentIds { get; } = new HashSet<Guid>();
 
-        public Task<GameCharacter[]> CharactersPresent([FromServices] IClusterClient clusterClient)
+        public Task<GameCharacter[]> CharactersPresent([Service] IClusterClient clusterClient)
         {
             return Task.WhenAll(CharactersPresentIds.Select(id => clusterClient.GetGrain<IGameCharacterGrain>(id).GetState()));
         }

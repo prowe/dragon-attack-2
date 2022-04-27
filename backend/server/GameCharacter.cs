@@ -1,4 +1,3 @@
-using GraphQL;
 using Orleans;
 using Orleans.Streams;
 
@@ -12,7 +11,7 @@ namespace DragonAttack
         public int CurrentHitPoints { get; set; }
         public Guid LocationAreaId { get; set; }
 
-        public Task<Area> Location([FromServices] IClusterClient clusterClient)
+        public Task<Area> Location([Service] IClusterClient clusterClient)
         {
             return clusterClient.GetGrain<IAreaGrain>(LocationAreaId).GetState();
         }  

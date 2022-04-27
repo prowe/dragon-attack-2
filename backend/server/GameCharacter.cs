@@ -6,7 +6,7 @@ namespace DragonAttack
     public class GameCharacter
     {
         public Guid Id { get; set; }
-        public string Name { get; set; }
+        public string? Name { get; set; }
         public int TotalHitPoints { get; set; }
         public int CurrentHitPoints { get; set; }
         public Guid LocationAreaId { get; set; }
@@ -56,8 +56,8 @@ namespace DragonAttack
         private readonly ILogger<GameCharacterGrain> logger;
         private readonly IClusterClient clusterClient;
         private GameCharacter? State {get; set;}
-        private INPCController controller;
-        private IDisposable controllerTurnHandle;
+        private INPCController? controller;
+        private IDisposable? controllerTurnHandle;
 
         public GameCharacterGrain(ILogger<GameCharacterGrain> logger, IClusterClient clusterClient)
         {

@@ -28,7 +28,7 @@ namespace DragonAttack
                 }, false);
                 logger.LogWarning("Dragon spawned");
             } 
-            catch (AlreadySpawnedException e)
+            catch (AlreadySpawnedException)
             {
                 logger.LogInformation("Dragon already spawned");
             }

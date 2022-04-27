@@ -6,7 +6,7 @@ namespace DragonAttack
 {
     public class Area {
         public Guid Id { get; set; }
-        public string Name { get; set; }
+        public string? Name { get; set; }
         public HashSet<Guid> CharactersPresentIds { get; } = new HashSet<Guid>();
 
         public Task<GameCharacter[]> CharactersPresent([Service] IClusterClient clusterClient)
@@ -43,7 +43,7 @@ namespace DragonAttack
     {
         private readonly ILogger<AreaGrain> logger;
         private readonly IClusterClient clusterClient;
-        private Area State { get; set; }
+        private Area? State { get; set; }
 
         public AreaGrain(IClusterClient clusterClient, ILogger<AreaGrain> logger)
         {

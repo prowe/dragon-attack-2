@@ -7,7 +7,7 @@ export interface JoinGameFormProps {
 }
 
 export default function JoinGameForm({setPlayer}: JoinGameFormProps) {
-    const [callJoin, { loading, error }] = useMutation(JoinGameDocument);
+    const [callJoin, { loading, error, data }] = useMutation(JoinGameDocument);
 
     const onSubmit: FormEventHandler<HTMLFormElement> = async (event) => {
         event.preventDefault();

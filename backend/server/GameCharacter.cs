@@ -6,7 +6,7 @@ namespace DragonAttack
     public class GameCharacter
     {
         public Guid Id { get; set; }
-        public string? Name { get; set; }
+        public string Name { get; set; }
         public int TotalHitPoints { get; set; }
         public int CurrentHitPoints { get; set; }
         public Guid LocationAreaId { get; set; }

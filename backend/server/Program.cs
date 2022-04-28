@@ -37,7 +37,8 @@ namespace DragonAttack
                 .AddQueryType<Query>()
                 .AddMutationType<Mutation>()
                 .AddSubscriptionType<Subscription>()
-                .AddType<HealthChangedEvent>();
+                .AddType<HealthChangedEvent>()
+                .AddType<CharacterEnteredAreaEvent>();
 
             services.AddHostedService<DragonSpawner>();
         }

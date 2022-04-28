@@ -1,0 +1,12 @@
+subscription WatchArea($areaId: ID!) {
+    watchArea(id: $areaId) {
+        __typename
+        ... on CharacterEnteredAreaEvent {
+            gameCharacter {
+                id
+                name
+                currentHealthPercent
+            }
+        }
+    }
+}

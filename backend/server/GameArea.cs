@@ -6,7 +6,7 @@ namespace DragonAttack
 {
     public class Area {
         public Guid Id { get; set; }
-        public string? Name { get; set; }
+        public string Name { get; set; }
         public HashSet<Guid> CharactersPresentIds { get; } = new HashSet<Guid>();
 
         public Task<GameCharacter[]> CharactersPresent([Service] IClusterClient clusterClient)
@@ -22,6 +22,7 @@ namespace DragonAttack
         public Task<Area> GetState();
     }
 
+    [UnionType("AreaEvent")]
     public interface IAreaEvent
     {
     }
@@ -29,7 +30,16 @@ namespace DragonAttack
     public class CharacterEnteredAreaEvent : IAreaEvent
     {
         public Guid GameCharacterId { get; set; }
+        public Task<GameCharacter> GameCharacter([Service] IClusterClient clusterClient)
+        {
+            return clusterClient.GetGrain<IGameCharacterGrain>(GameCharacterId).GetState();
+        }
+
         public Guid AreaId { get; set; }
+        public Task<Area> Area([Service] IClusterClient clusterClient)
+        {
+            return clusterClient.GetGrain<IAreaGrain>(AreaId).GetState();
+        }
 
         public override string ToString()
         {

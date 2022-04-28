@@ -30,19 +30,18 @@ namespace DragonAttack
             var streamProvider = clusterClient.GetStreamProvider("default");
             var stream = streamProvider.GetStream<IGameCharacterEvent>(id, nameof(IGameCharacterEvent));
             ISourceStream<IGameCharacterEvent> sourceStream = new OrleansStreamSourceStream<IGameCharacterEvent>(stream);
-            // var channel = Channel.CreateBounded<IGameCharacterEvent>(100);
-            // stream.SubscribeAsync(ForwardToChannel<IGameCharacterEvent>(channel));
-            // TODO: I think this leaks
-            // ISourceStream<IGameCharacterEvent> sourceStream = new InMemorySourceStream<IGameCharacterEvent>(channel);
             return ValueTask.FromResult(sourceStream);
         }
 
-        private static Func<T, StreamSequenceToken, Task> ForwardToChannel<T>(Channel<T> channel)
+        [SubscribeAndResolve]
+        public ValueTask<ISourceStream<IAreaEvent>> WatchArea(Guid id)
         {
-            return async (T ev, StreamSequenceToken token) => 
-            {
-                await channel.Writer.WriteAsync(ev);
-            };
+            logger.LogInformation("Watching area {id}", id);
+            
+            var streamProvider = clusterClient.GetStreamProvider("default");
+            var stream = streamProvider.GetStream<IAreaEvent>(id, nameof(IAreaGrain));
+            ISourceStream<IAreaEvent> sourceStream = new OrleansStreamSourceStream<IAreaEvent>(stream);
+            return ValueTask.FromResult(sourceStream);
         }
     }
 }

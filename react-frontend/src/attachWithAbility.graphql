@@ -1,6 +1,0 @@
-mutation AttackWithAbility(
-    $playerId: ID!,
-    $targetId: ID!, 
-    $abilityId: String!) {
-    attackWithAbility(playerId: $playerId, targetId: $targetId, abilityId: $abilityId)
-}

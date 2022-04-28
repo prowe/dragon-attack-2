@@ -1,0 +1,6 @@
+mutation UseAbility(
+    $playerId: ID!,
+    $abilityId: String!,
+    $targetId: ID!) {
+    useAbility(playerId: $playerId, abilityId: $abilityId, targetId: $targetId)
+}

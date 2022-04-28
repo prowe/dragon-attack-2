@@ -31,9 +31,11 @@ namespace DragonAttack
             services.AddSingleton<Mutation>();
             services.AddSingleton<Query>();
             services.AddSingleton<Subscription>();
+            services.AddHttpContextAccessor();
 
             services.AddGraphQLServer()
                 .BindRuntimeType<Guid, IdType>()
+                .AddSocketSessionInterceptor<CurrentPlayerInterceptor>()
                 .AddQueryType<Query>()
                 .AddMutationType<Mutation>()
                 .AddSubscriptionType<Subscription>()

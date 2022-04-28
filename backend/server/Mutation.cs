@@ -29,7 +29,7 @@ namespace DragonAttack
             return player;
         }
 
-        public async Task<int> AttackWithAbility(Guid playerId, Guid targetId, string abilityId)
+        public async Task<int> UseAbility(Guid playerId, string abilityId, Guid targetId)
         {
             return await clusterClient.GetGrain<IGameCharacterGrain>(playerId).UseAbility(abilityId, targetId);
         }

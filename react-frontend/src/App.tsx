@@ -2,17 +2,13 @@ import './App.css'
 import { ApolloClient, ApolloProvider, InMemoryCache, NormalizedCacheObject } from "@apollo/client";
 import { SubscriptionClient } from 'subscriptions-transport-ws'
 import { WebSocketLink } from '@apollo/client/link/ws';
-import CharacterStatusDisplay from './CharacterStatusDisplay'
-import AbilityButton from './AbilityButton';
 import { useState } from 'react';
 import { JoinGameMutation } from './generated/graphql';
 import JoinGameForm from './JoinGameForm';
 import GameInterface from './GameInterface';
 
 const subscriptionClient = new SubscriptionClient('ws://localhost:5000/graphql', {
-  connectionParams: {
-    playerId: 'player-id-here'
-  }
+  reconnect: true
 });
 
 const apolloClient = new ApolloClient({

@@ -1,7 +1,7 @@
 subscription WatchCharacter($characterId: ID!) {
     watchCharacter(id: $characterId) {
         __typename
-        ... on AttackedEvent {
+        ... on HealthChangedEvent {
             resultingHealthPercent
         }
     }

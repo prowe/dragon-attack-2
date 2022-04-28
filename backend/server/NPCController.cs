@@ -8,7 +8,7 @@ namespace DragonAttack
     {
         Task TakeTurn(IGameCharacterGrain characterGrain);
 
-        void OnDamageTaken(AttackedEvent attackedEvent);
+        void OnHealthChange(HealthChangedEvent attackedEvent);
     }
 
     public class DragonController : INPCController
@@ -24,10 +24,14 @@ namespace DragonAttack
             this.clusterClient = clusterClient;
         }
 
-        public void OnDamageTaken(AttackedEvent attackedEvent)
+        public void OnHealthChange(HealthChangedEvent attackedEvent)
         {
-            logger.LogInformation("Logging damage taken {damage}", attackedEvent.Damage);
-            hateList.RegisterDamage(attackedEvent.Attacker, attackedEvent.Damage);
+            if (attackedEvent.Difference < 0)
+            {
+                var damage = attackedEvent.Difference * -1;
+                logger.LogInformation("Logging damage taken {damage}", damage);
+                hateList.RegisterDamage(attackedEvent.Source, damage);
+            }
         }
 
         public async Task TakeTurn(IGameCharacterGrain characterGrain)

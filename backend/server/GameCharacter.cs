@@ -32,11 +32,11 @@ namespace DragonAttack
     {
     }
 
-    public class AttackedEvent : IGameCharacterEvent
+    public class HealthChangedEvent : IGameCharacterEvent
     {
-        public Guid Attacker { get; set; }
+        public Guid Source { get; set; }
         public Guid Target { get; set; }
-        public int Damage { get; set; }
+        public int Difference { get; set; }
         public int ResultingHealthPercent { get; set; }
     }
 
@@ -48,7 +48,7 @@ namespace DragonAttack
 
         public Task<int> UseAbility(string abilityId, params Guid[] targetIds);
 
-        public Task TakeDamage(int damage, Guid sourceCharacterId);
+        public Task ModifyHealth(int damage, Guid sourceCharacterId);
     }
 
     public class GameCharacterGrain : Orleans.Grain, IGameCharacterGrain
@@ -107,7 +107,7 @@ namespace DragonAttack
             {
                 var target = GrainFactory.GetGrain<IGameCharacterGrain>(targetId);
                 var damage = CalculateDamage(abilityId);
-                await target.TakeDamage(damage, this.GetPrimaryKey());
+                await target.ModifyHealth(-damage, this.GetPrimaryKey());
                 return damage;
             }));
             return damages.Sum();
@@ -125,25 +125,32 @@ namespace DragonAttack
             };
         }
 
-        public async Task TakeDamage(int damage, Guid sourceCharacterId)
+        public async Task ModifyHealth(int attemptedDelta, Guid sourceCharacterId)
         {
             if (State == null)
             {
                 throw new Exception("State for character is null");
             }
-            var damageTaken = Math.Min(State.CurrentHitPoints, damage);
-            State.CurrentHitPoints -= damageTaken;
-            logger.LogInformation("Took {damage} damage. Down to {currentHitPoints} HP", damageTaken, State.CurrentHitPoints);
+            var actualDelta = ComputeActualHealthChange(attemptedDelta);
+            State.CurrentHitPoints += actualDelta;
+            logger.LogInformation("Health changed by {actualDelta} to {currentHitPoints} HP", actualDelta, State.CurrentHitPoints);
 
-            var attackedEvent = new AttackedEvent
+            var healthChangedEvent = new HealthChangedEvent
             {
-                Attacker = sourceCharacterId,
+                Source = sourceCharacterId,
                 Target = this.GetPrimaryKey(),
-                Damage = damageTaken,
+                Difference = actualDelta,
                 ResultingHealthPercent = State.CurrentHealthPercent
             };
-            controller?.OnDamageTaken(attackedEvent);
-            await EventStream.OnNextAsync(attackedEvent);
+            controller?.OnHealthChange(healthChangedEvent);
+            await EventStream.OnNextAsync(healthChangedEvent);
+        }
+
+        private int ComputeActualHealthChange(int attemptedDelta)
+        {
+            var maxDamage = -1 * State.CurrentHitPoints;
+            var maxHeal = State.TotalHitPoints - State.CurrentHitPoints;
+            return Math.Max(maxDamage, Math.Min(maxHeal, attemptedDelta));
         }
 
         private static int Roll(int sides, int rolls = 1)

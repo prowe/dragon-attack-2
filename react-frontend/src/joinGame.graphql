@@ -1,17 +1,5 @@
 mutation JoinGame($name: String!) {
     joinGame(name: $name) {
         id
-        name
-
-        location {
-            id
-            name
-
-            charactersPresent {
-                id
-                name
-                currentHealthPercent
-            }
-        }
     }
 }

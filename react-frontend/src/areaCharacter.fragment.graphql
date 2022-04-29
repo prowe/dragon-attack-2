@@ -1,0 +1,5 @@
+fragment AreaCharacter on GameCharacter {
+    id
+    name
+    currentHealthPercent
+}

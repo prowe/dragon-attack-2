@@ -3,10 +3,10 @@ import { FormEventHandler } from "react"
 import { JoinGameDocument, JoinGameMutation, JoinGameMutationVariables } from "./generated/graphql";
 
 export interface JoinGameFormProps {
-    setPlayer: (player: JoinGameMutation['joinGame'] | null) => void;
+    setCurrentPlayerId: (playerId: string) => void;
 }
 
-export default function JoinGameForm({setPlayer}: JoinGameFormProps) {
+export default function JoinGameForm({setCurrentPlayerId}: JoinGameFormProps) {
     const [callJoin, { loading, error, data }] = useMutation(JoinGameDocument);
 
     const onSubmit: FormEventHandler<HTMLFormElement> = async (event) => {
@@ -18,7 +18,10 @@ export default function JoinGameForm({setPlayer}: JoinGameFormProps) {
                 name
             }
         });
-        setPlayer(joinResult.data?.joinGame ?? null);
+        const playerId = joinResult.data?.joinGame.id;
+        if (playerId) {
+            setCurrentPlayerId(playerId);
+        }
     };
 
     return (

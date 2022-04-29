@@ -1,6 +1,6 @@
 import './App.css'
 import { ApolloClient, ApolloProvider, InMemoryCache, NormalizedCacheObject } from "@apollo/client";
-import { SubscriptionClient } from 'subscriptions-transport-ws'
+import { MessageTypes, SubscriptionClient } from 'subscriptions-transport-ws'
 import { WebSocketLink } from '@apollo/client/link/ws';
 import { useState } from 'react';
 import { JoinGameMutation } from './generated/graphql';
@@ -17,14 +17,14 @@ const apolloClient = new ApolloClient({
 });
 
 function App() {
-  const [player, setPlayer] = useState<JoinGameMutation['joinGame'] | null>(null);
+  const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
 
   return (
     <div className="App">
       <ApolloProvider client={apolloClient}>
-        {player
-          ? <GameInterface player={player} />
-          : <JoinGameForm setPlayer={setPlayer} /> }
+        {currentPlayerId
+          ? <GameInterface playerId={currentPlayerId} />
+          : <JoinGameForm setCurrentPlayerId={setCurrentPlayerId} /> }
       </ApolloProvider>
     </div>
   )

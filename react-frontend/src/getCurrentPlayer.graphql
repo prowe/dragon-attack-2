@@ -1,0 +1,16 @@
+query GetCurrentPlayer($playerId: ID!) {
+    player(id: $playerId) {
+        __typename
+        id
+        name
+
+        location {
+            id
+            name
+
+            charactersPresent {
+                ...AreaCharacter
+            }
+        }
+    }
+}

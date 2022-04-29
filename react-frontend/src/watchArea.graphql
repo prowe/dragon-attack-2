@@ -3,9 +3,7 @@ subscription WatchArea($areaId: ID!) {
         __typename
         ... on CharacterEnteredAreaEvent {
             gameCharacter {
-                id
-                name
-                currentHealthPercent
+                ...AreaCharacter
             }
         }
     }

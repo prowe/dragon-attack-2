@@ -8,6 +8,8 @@ namespace DragonAttack
     // This isn't working
     public class CurrentPlayerInterceptor : ISocketSessionInterceptor
     {
+        private const string contextKey = "playerId";
+
         private readonly ILogger<CurrentPlayerInterceptor> logger;
 
         public CurrentPlayerInterceptor(ILogger<CurrentPlayerInterceptor> logger)
@@ -17,7 +19,7 @@ namespace DragonAttack
 
         public ValueTask<ConnectionStatus> OnConnectAsync(ISocketConnection connection, InitializeConnectionMessage message, CancellationToken cancellationToken)
         {
-            if (message.Payload?.TryGetValue("playerId", out var value) ?? false)
+            if (message.Payload?.TryGetValue(contextKey, out var value) ?? false)
             {
                 if(value is string playerId)
                 {
@@ -30,9 +32,10 @@ namespace DragonAttack
 
         public ValueTask OnRequestAsync(ISocketConnection connection, IQueryRequestBuilder requestBuilder, CancellationToken cancellationToken)
         {
-            if (connection.HttpContext.Items.TryGetValue("playerId", out var value))
+            if (connection.HttpContext.Items.TryGetValue(contextKey, out var value))
             {
-                requestBuilder.AddProperty("playerId", value);
+                logger.LogInformation("Executing request with player {playerId}", value);
+                requestBuilder.AddProperty(contextKey, value);
             }
             return ValueTask.CompletedTask;
         }

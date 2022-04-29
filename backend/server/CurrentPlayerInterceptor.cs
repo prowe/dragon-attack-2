@@ -23,7 +23,7 @@ namespace DragonAttack
             {
                 if(value is string playerId)
                 {
-                    logger.LogInformation("Handling current playerId {playerId}", playerId);
+                    logger.LogInformation("Setting current playerId {playerId}", playerId);
                     connection.HttpContext.Items["playerId"] = Guid.Parse(playerId);
                 }
             }
@@ -34,7 +34,6 @@ namespace DragonAttack
         {
             if (connection.HttpContext.Items.TryGetValue(contextKey, out var value))
             {
-                logger.LogInformation("Executing request with player {playerId}", value);
                 requestBuilder.AddProperty(contextKey, value);
             }
             return ValueTask.CompletedTask;

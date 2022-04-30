@@ -52,6 +52,11 @@ namespace DragonAttack
                 siloBuilder.UseLocalhostClustering();
                 siloBuilder.AddSimpleMessageStreamProvider("default");
                 siloBuilder.AddMemoryGrainStorage("PubSubStore");
+                siloBuilder.AddAzureTableGrainStorageAsDefault(options =>
+                {
+                    options.UseJson = true;
+                    options.ConfigureTableServiceClient("UseDevelopmentStorage=true");
+                });
             });
         }
     }

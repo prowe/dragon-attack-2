@@ -1,4 +1,5 @@
 using Orleans;
+using Orleans.Runtime;
 using Orleans.Streams;
 
 namespace DragonAttack
@@ -55,29 +56,33 @@ namespace DragonAttack
     {
         private readonly ILogger<GameCharacterGrain> logger;
         private readonly IClusterClient clusterClient;
-        private GameCharacter? State {get; set;}
+        private readonly IPersistentState<GameCharacter> gameCharacterState;
         private INPCController? controller;
         private IDisposable? controllerTurnHandle;
 
-        public GameCharacterGrain(ILogger<GameCharacterGrain> logger, IClusterClient clusterClient)
+        public GameCharacterGrain(
+            ILogger<GameCharacterGrain> logger, 
+            IClusterClient clusterClient,
+            [PersistentState("GameCharacter")] IPersistentState<GameCharacter> gameCharacterState)
         {
             this.logger = logger;
             this.clusterClient = clusterClient;
+            this.gameCharacterState = gameCharacterState;
         }
 
         private IAsyncStream<IGameCharacterEvent> EventStream => clusterClient
             .GetStreamProvider("default")
             .GetStream<IGameCharacterEvent>(this.GetPrimaryKey(), nameof(IGameCharacterEvent));
 
-        public Task<GameCharacter> GetState() => Task.FromResult(State ?? throw new NullReferenceException());
+        public Task<GameCharacter> GetState() => Task.FromResult(gameCharacterState.State ?? throw new NullReferenceException());
 
         public async Task Spawn(GameCharacter gameCharacter, bool isPlayerCharacter = false)
         {
-            if (State != null)
+            if (gameCharacterState.RecordExists)
             {
                 throw new AlreadySpawnedException();
             }
-            State = gameCharacter;
+            gameCharacterState.State = gameCharacter;
             if (!isPlayerCharacter)
             {
                 SetupController();
@@ -91,6 +96,7 @@ namespace DragonAttack
                 .GetStreamProvider("default")
                 .GetStream<IAreaEvent>(enterAreaEvent.AreaId, nameof(IAreaGrain))
                 .OnNextAsync(enterAreaEvent);
+            await gameCharacterState.WriteStateAsync();
             logger.LogInformation("Spawned character {character}", gameCharacter);
         }
 
@@ -127,29 +133,32 @@ namespace DragonAttack
 
         public async Task ModifyHealth(int attemptedDelta, Guid sourceCharacterId)
         {
-            if (State == null)
+            if (!gameCharacterState.RecordExists)
             {
                 throw new Exception("State for character is null");
             }
             var actualDelta = ComputeActualHealthChange(attemptedDelta);
-            State.CurrentHitPoints += actualDelta;
-            logger.LogInformation("Health changed by {actualDelta} to {currentHitPoints} HP", actualDelta, State.CurrentHitPoints);
+            gameCharacterState.State.CurrentHitPoints += actualDelta;
+            logger.LogInformation("Health changed by {actualDelta} to {currentHitPoints} HP", actualDelta, gameCharacterState.State.CurrentHitPoints);
 
             var healthChangedEvent = new HealthChangedEvent
             {
                 Source = sourceCharacterId,
                 Target = this.GetPrimaryKey(),
                 Difference = actualDelta,
-                ResultingHealthPercent = State.CurrentHealthPercent
+                ResultingHealthPercent = gameCharacterState.State.CurrentHealthPercent
             };
             controller?.OnHealthChange(healthChangedEvent);
             await EventStream.OnNextAsync(healthChangedEvent);
+
+            //TODO: debounce
+            await gameCharacterState.WriteStateAsync();
         }
 
         private int ComputeActualHealthChange(int attemptedDelta)
         {
-            var maxDamage = -1 * State.CurrentHitPoints;
-            var maxHeal = State.TotalHitPoints - State.CurrentHitPoints;
+            var maxDamage = -1 * gameCharacterState.State.CurrentHitPoints;
+            var maxHeal = gameCharacterState.State.TotalHitPoints - gameCharacterState.State.CurrentHitPoints;
             return Math.Max(maxDamage, Math.Min(maxHeal, attemptedDelta));
         }
 

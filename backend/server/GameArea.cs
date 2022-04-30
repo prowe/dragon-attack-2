@@ -1,6 +1,7 @@
 using Orleans;
 using Orleans.Streams;
 using Orleans.Core;
+using Orleans.Runtime;
 
 namespace DragonAttack
 {
@@ -52,22 +53,30 @@ namespace DragonAttack
     public class AreaGrain : Orleans.Grain, IAreaGrain, IAsyncObserver<IAreaEvent>
     {
         private readonly ILogger<AreaGrain> logger;
+        private readonly IPersistentState<Area> areaState;
         private readonly IClusterClient clusterClient;
-        private Area? State { get; set; }
 
-        public AreaGrain(IClusterClient clusterClient, ILogger<AreaGrain> logger)
+        public AreaGrain(
+            IClusterClient clusterClient, 
+            ILogger<AreaGrain> logger,
+            [PersistentState("Area")] IPersistentState<Area> areaState)
         {
             this.clusterClient = clusterClient;
             this.logger = logger;
+            this.areaState = areaState;
         }
 
         public override async Task OnActivateAsync()
         {
-            State = new Area
+            if(!areaState.RecordExists)
             {
-                Id = this.GetPrimaryKey(),
-                Name = "Starting Area",
-            };
+                areaState.State= new Area
+                {
+                    Id = this.GetPrimaryKey(),
+                    Name = "Starting Area",
+                };
+                await areaState.WriteStateAsync();
+            }
 
             var streamProvider = base.GetStreamProvider("default");
             var stream = streamProvider.GetStream<IAreaEvent>(this.GetPrimaryKey(), nameof(IAreaGrain));
@@ -75,26 +84,24 @@ namespace DragonAttack
             await base.OnActivateAsync();
         }
 
-        public Task<Area> GetState() => Task.FromResult(State ?? throw new NullReferenceException());
+        public Task<Area> GetState() => Task.FromResult(areaState.State ?? throw new NullReferenceException());
 
         public Task OnCompletedAsync() => Task.CompletedTask;
 
         public Task OnErrorAsync(Exception ex) => Task.CompletedTask;
         
-        public Task OnNextAsync(IAreaEvent item, StreamSequenceToken? token = null)
+        public async Task OnNextAsync(IAreaEvent item, StreamSequenceToken? token = null)
         {
             logger.LogInformation("Got event: {event}", item);
             switch (item)
             {
                 case CharacterEnteredAreaEvent enteredAreaEvent:
-                    State.CharactersPresentIds.Add(enteredAreaEvent.GameCharacterId);
+                    areaState.State.CharactersPresentIds.Add(enteredAreaEvent.GameCharacterId);
+                    await areaState.WriteStateAsync();
                     break;
                 default:
                     break;
             }
-            return Task.CompletedTask;
         }
-
-        
     }
 }

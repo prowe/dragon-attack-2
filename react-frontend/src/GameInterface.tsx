@@ -1,7 +1,7 @@
-import { useQuery, useSubscription } from "@apollo/client";
-import { useState } from "react";
-import AbilityButton from "./AbilityButton";
-import CharacterStatusDisplay from "./CharacterStatusDisplay";
+import { Reference, useQuery, useSubscription } from "@apollo/client";
+import AbilityBar from "./AbilityBar";
+import CharactersList from "./CharactersList";
+import { CurrentTargetProvider } from "./CurrentTargetContext";
 import { AreaCharacterFragmentDoc, GetCurrentPlayerDocument, GetCurrentPlayerQuery, WatchAreaDocument } from "./generated/graphql";
 
 export interface GameInterfaceProps{
@@ -23,22 +23,18 @@ function useWatchArea (area?: GetCurrentPlayerQuery['player']['location']) {
             cache.modify({
                 id: cache.identify(area),
                 fields: {
-                    charactersPresent: (existingCharacters = [], {readField}) => {
+                    charactersPresent: (existingCharacterRefs: Reference[] = []) => {
                         const newCharacterRef = cache.writeFragment({
                             data: newCharacter,
                             fragment: AreaCharacterFragmentDoc
                         });
                           
-                        // Quick safety check - if the new comment is already
-                        // present in the cache, we don't need to add it again.
-                        // if (existingCommentRefs.some(
-                        //     ref => readField('id', ref) === newComment.id
-                        // )) {
-                        //     return existingCommentRefs;
-                        // }
+                        if (existingCharacterRefs.some(ref => ref.__ref === newCharacterRef?.__ref)) {
+                            return existingCharacterRefs;
+                        }
 
                         console.log('Modified cache for new data', newCharacterRef);
-                        return [...existingCharacters, newCharacterRef];
+                        return [...existingCharacterRefs, newCharacterRef];
                     }
                 }
             });
@@ -47,7 +43,6 @@ function useWatchArea (area?: GetCurrentPlayerQuery['player']['location']) {
 }
 
 export default function GameInterface({playerId}: GameInterfaceProps) {
-    const [targetId, setTargetId] = useState<string | null>(null);
     const {data, loading, error} = useQuery(GetCurrentPlayerDocument, {
         variables: {
             playerId
@@ -58,19 +53,18 @@ export default function GameInterface({playerId}: GameInterfaceProps) {
     if (loading || !player) {
         return <progress />;
     }
+    const isDead = player.currentHealthPercent <= 0;
 
     return (
-        <div>
-            <h1>Welcome {player.name}!</h1>
-
-            <ul>
-                {player.location.charactersPresent
-                    .map(c => <CharacterStatusDisplay key={c.id} currentTargetId={targetId} setTarget={setTargetId} gameCharacter={c} />)}
-            </ul>
-
-            <section>
-                <AbilityButton playerId={player.id} targetId={targetId} />
-            </section>
-        </div>
+        <CurrentTargetProvider>
+            <main>
+                <h1>Welcome {player.name}! 
+                    {isDead && <span>(Dead)</span>}
+                </h1>
+                
+                <CharactersList characters={player.location.charactersPresent} />
+                <AbilityBar player={player} />
+            </main>
+        </CurrentTargetProvider>
     );
 }

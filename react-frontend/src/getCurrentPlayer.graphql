@@ -3,6 +3,7 @@ query GetCurrentPlayer($playerId: ID!) {
         __typename
         id
         name
+        currentHealthPercent
 
         location {
             id

@@ -22,10 +22,11 @@ namespace DragonAttack
                 {
                     Id = dragonId,
                     Name = "Dragon",
+                    IsPlayerCharacter = false,
                     CurrentHitPoints = 1000,
                     TotalHitPoints = 1000,
                     LocationAreaId = IAreaGrain.StartingArea,
-                }, false);
+                });
                 logger.LogWarning("Dragon spawned");
             } 
             catch (AlreadySpawnedException)

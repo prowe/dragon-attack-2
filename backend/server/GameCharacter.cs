@@ -11,6 +11,7 @@ namespace DragonAttack
         public int TotalHitPoints { get; set; }
         public int CurrentHitPoints { get; set; }
         public Guid LocationAreaId { get; set; }
+        public bool IsPlayerCharacter { get; set; } = true;
 
         public Task<Area> Location([Service] IClusterClient clusterClient)
         {
@@ -45,7 +46,7 @@ namespace DragonAttack
     {
         public Task<GameCharacter> GetState();
         
-        Task Spawn(GameCharacter player, bool isPlayerCharacter);
+        Task Spawn(GameCharacter player);
 
         public Task<int> UseAbility(string abilityId, params Guid[] targetIds);
 
@@ -70,23 +71,26 @@ namespace DragonAttack
             this.gameCharacterState = gameCharacterState;
         }
 
+        public override Task OnActivateAsync()
+        {
+            SetupControllerIfNeeded();
+            return base.OnActivateAsync();
+        }
+
         private IAsyncStream<IGameCharacterEvent> EventStream => clusterClient
             .GetStreamProvider("default")
             .GetStream<IGameCharacterEvent>(this.GetPrimaryKey(), nameof(IGameCharacterEvent));
 
         public Task<GameCharacter> GetState() => Task.FromResult(gameCharacterState.State ?? throw new NullReferenceException());
 
-        public async Task Spawn(GameCharacter gameCharacter, bool isPlayerCharacter = false)
+        public async Task Spawn(GameCharacter gameCharacter)
         {
             if (gameCharacterState.RecordExists)
             {
                 throw new AlreadySpawnedException();
             }
             gameCharacterState.State = gameCharacter;
-            if (!isPlayerCharacter)
-            {
-                SetupController();
-            }
+            SetupControllerIfNeeded();
             var enterAreaEvent = new CharacterEnteredAreaEvent
             {
                 AreaId = gameCharacter.LocationAreaId,
@@ -100,8 +104,12 @@ namespace DragonAttack
             logger.LogInformation("Spawned character {character}", gameCharacter);
         }
 
-        private void SetupController()
+        private void SetupControllerIfNeeded()
         {
+            if (gameCharacterState.State.IsPlayerCharacter)
+            {
+                return;
+            }
             controller = this.ServiceProvider.GetRequiredService<INPCController>();
             controllerTurnHandle = RegisterTimer(obj => controller.TakeTurn(this), null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
         }

@@ -50,12 +50,22 @@ namespace DragonAttack
             builder.Host.UseOrleans(siloBuilder =>
             {
                 siloBuilder.UseLocalhostClustering();
-                siloBuilder.AddSimpleMessageStreamProvider("default");
-                siloBuilder.AddMemoryGrainStorage("PubSubStore");
+                siloBuilder.AddAzureQueueStreams("default", optionsBuilder => 
+                {
+                    optionsBuilder.Configure(options=> {
+                        var queueConnectionString = builder.Configuration.GetConnectionString("StreamProvider");
+                        options.ConfigureQueueServiceClient(queueConnectionString);
+                    });
+                });
+                siloBuilder.AddAzureTableGrainStorage("PubSubStore", options =>
+                {
+                    options.UseJson = true;
+                    options.ConfigureTableServiceClient(builder.Configuration.GetConnectionString("GrainStorage"));
+                });
                 siloBuilder.AddAzureTableGrainStorageAsDefault(options =>
                 {
                     options.UseJson = true;
-                    options.ConfigureTableServiceClient("UseDevelopmentStorage=true");
+                    options.ConfigureTableServiceClient(builder.Configuration.GetConnectionString("GrainStorage"));
                 });
             });
         }

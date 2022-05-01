@@ -1,0 +1,4 @@
+fragment PlayerAbility on Ability {
+    id
+    name
+}

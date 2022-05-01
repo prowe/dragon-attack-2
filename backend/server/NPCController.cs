@@ -34,40 +34,41 @@ namespace DragonAttack
             }
         }
 
-        public async Task TakeTurn(IGameCharacterGrain characterGrain)
+        public Task TakeTurn(IGameCharacterGrain characterGrain)
         {
-            logger.LogInformation("Taking a turn {id}", characterGrain.GetPrimaryKey());
-            if (flameBreathCooldownRemaining == 0)
-            {
-                await ExecuteFlameBreath(characterGrain);
-                flameBreathCooldownRemaining = 5;
-                return;
-            }
+            // logger.LogInformation("Taking a turn {id}", characterGrain.GetPrimaryKey());
+            // if (flameBreathCooldownRemaining == 0)
+            // {
+            //     await ExecuteFlameBreath(characterGrain);
+            //     flameBreathCooldownRemaining = 5;
+            //     return;
+            // }
 
-            if (!hateList.Empty)
-            {
-                var mostHatedId = hateList.First().Key;
-                await characterGrain.UseAbility("claw", mostHatedId);
-                flameBreathCooldownRemaining--;
-            }
+            // if (!hateList.Empty)
+            // {
+            //     var mostHatedId = hateList.First().Key;
+            //     await characterGrain.UseAbility("claw", mostHatedId);
+            //     flameBreathCooldownRemaining--;
+            // }
+            return Task.CompletedTask;
         }
 
-        private async Task ExecuteFlameBreath(IGameCharacterGrain characterGrain)
-        {
-            var state = await characterGrain.GetState();
-            var myId = characterGrain.GetPrimaryKey();
-            var area = clusterClient.GetGrain<IAreaGrain>(state.LocationAreaId);
-            logger.LogInformation("Executing Flame Breath, {areaId}", state.LocationAreaId);
-            var areaState = await area.GetState();
-            var targetIds = areaState.CharactersPresentIds
-                .Where(id => id != myId)
-                .ToArray();
-            logger.LogInformation("Flame Breath targets: {myId} -> {targetIds}", myId, targetIds);
-            if (targetIds.Any())
-            {
-                await characterGrain.UseAbility("flame-breath", targetIds);
-            }
-        }
+        // private async Task ExecuteFlameBreath(IGameCharacterGrain characterGrain)
+        // {
+        //     var state = await characterGrain.GetState();
+        //     var myId = characterGrain.GetPrimaryKey();
+        //     var area = clusterClient.GetGrain<IAreaGrain>(state.LocationAreaId);
+        //     logger.LogInformation("Executing Flame Breath, {areaId}", state.LocationAreaId);
+        //     var areaState = await area.GetState();
+        //     var targetIds = areaState.CharactersPresentIds
+        //         .Where(id => id != myId)
+        //         .ToArray();
+        //     logger.LogInformation("Flame Breath targets: {myId} -> {targetIds}", myId, targetIds);
+        //     if (targetIds.Any())
+        //     {
+        //         await characterGrain.UseAbility("flame-breath", targetIds);
+        //     }
+        // }
     }
 
     public class HateList : IEnumerable<KeyValuePair<Guid, int>>

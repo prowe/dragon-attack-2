@@ -13,5 +13,9 @@ query GetCurrentPlayer($playerId: ID!) {
                 ...AreaCharacter
             }
         }
+
+        abilities {
+            ...PlayerAbility
+        }
     }
 }

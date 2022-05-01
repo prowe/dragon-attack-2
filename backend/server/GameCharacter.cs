@@ -11,6 +11,8 @@ namespace DragonAttack
         public int TotalHitPoints { get; set; }
         public int CurrentHitPoints { get; set; }
         public Guid LocationAreaId { get; set; }
+        public List<Ability> Abilities { get; set; }
+
         public bool IsPlayerCharacter { get; set; } = true;
 
         public Task<Area> Location([Service] IClusterClient clusterClient)
@@ -48,7 +50,7 @@ namespace DragonAttack
         
         Task Spawn(GameCharacter player);
 
-        public Task<int> UseAbility(string abilityId, params Guid[] targetIds);
+        public Task<int> UseAbility(Guid abilityId, params Guid[] targetIds);
 
         public Task ModifyHealth(int damage, Guid sourceCharacterId);
     }
@@ -114,29 +116,19 @@ namespace DragonAttack
             controllerTurnHandle = RegisterTimer(obj => controller.TakeTurn(this), null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
         }
 
-        public async Task<int> UseAbility(string abilityId, params Guid[] targetIds)
+        public async Task<int> UseAbility(Guid abilityId, params Guid[] targetIds)
         {
             logger.LogInformation("Attacking {targets}", targetIds);
+            var ability = gameCharacterState.State.Abilities.Single(a => a.Id == abilityId);
+            var multiplyer = ability.Effect == AbilityEffect.Damage ? -1 : 1;
             var damages = await Task.WhenAll(targetIds.Select(async targetId =>
             {
                 var target = GrainFactory.GetGrain<IGameCharacterGrain>(targetId);
-                var damage = CalculateDamage(abilityId);
-                await target.ModifyHealth(-damage, this.GetPrimaryKey());
-                return damage;
+                var delta = multiplyer * ability.Dice.Roll();
+                await target.ModifyHealth(delta, this.GetPrimaryKey());
+                return delta;
             }));
             return damages.Sum();
-        }
-
-        private int CalculateDamage(string abilityId)
-        {
-            // TODO: better way to do this
-            return abilityId switch
-            {
-                "stab" => Roll(10),
-                "claw" => Roll(5) + Roll(5),
-                "flame-breath" => Roll(10) + 5,
-                _ => 0,
-            };
         }
 
         public async Task ModifyHealth(int attemptedDelta, Guid sourceCharacterId)
@@ -168,13 +160,6 @@ namespace DragonAttack
             var maxDamage = -1 * gameCharacterState.State.CurrentHitPoints;
             var maxHeal = gameCharacterState.State.TotalHitPoints - gameCharacterState.State.CurrentHitPoints;
             return Math.Max(maxDamage, Math.Min(maxHeal, attemptedDelta));
-        }
-
-        private static int Roll(int sides, int rolls = 1)
-        {
-            return Enumerable.Range(0, rolls)
-                .Select((int index) => Random.Shared.Next(sides) + 1)
-                .Sum();
         }
     }
 }

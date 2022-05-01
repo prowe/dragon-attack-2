@@ -24,13 +24,30 @@ namespace DragonAttack
                 IsPlayerCharacter = true,
                 TotalHitPoints = 100,
                 CurrentHitPoints = 100,
-                LocationAreaId = IAreaGrain.StartingArea
+                LocationAreaId = IAreaGrain.StartingArea,
+                Abilities = new List<Ability>
+                {
+                    new Ability
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = "Stab",
+                        Dice = new DiceSpecification { Rolls = 1, Sides = 6, Constant = 0},
+                        Effect = AbilityEffect.Damage
+                    },
+                    new Ability
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = "Slash",
+                        Dice = new DiceSpecification { Rolls = 2, Sides = 4, Constant = 0},
+                        Effect = AbilityEffect.Damage
+                    }
+                }
             };
             await clusterClient.GetGrain<IGameCharacterGrain>(id).Spawn(player);
             return player;
         }
 
-        public async Task<int> UseAbility(Guid playerId, string abilityId, Guid targetId)
+        public async Task<int> UseAbility(Guid playerId, Guid abilityId, Guid targetId)
         {
             return await clusterClient.GetGrain<IGameCharacterGrain>(playerId).UseAbility(abilityId, targetId);
         }

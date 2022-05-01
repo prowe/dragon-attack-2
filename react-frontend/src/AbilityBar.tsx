@@ -1,4 +1,4 @@
-import { GetCurrentPlayerQuery } from "./generated/graphql";
+import { GetCurrentPlayerQuery, PlayerAbilityFragment } from "./generated/graphql";
 import { useMutation } from "@apollo/client";
 import { UseAbilityDocument } from "./generated/graphql";
 import useCurrentTarget from "./CurrentTargetContext";
@@ -10,9 +10,10 @@ export interface AbilityBarProps {
 interface AbilityButtonProps {
     playerId: string;
     disabled: boolean;
+    ability: PlayerAbilityFragment;
 }
 
-function AbilityButton({playerId, disabled}: AbilityButtonProps) {
+function AbilityButton({playerId, disabled, ability}: AbilityButtonProps) {
     const {currentTargetId} = useCurrentTarget();
     const [executeAbility] = useMutation(UseAbilityDocument);
 
@@ -24,13 +25,13 @@ function AbilityButton({playerId, disabled}: AbilityButtonProps) {
         executeAbility({
             variables: {
                 playerId,
-                abilityId: 'stab',
+                abilityId: ability.id,
                 targetId: currentTargetId
             }
         });
     }
 
-    return <button onClick={onAttack} disabled={!currentTargetId || disabled} >Stab</button>;
+    return <button onClick={onAttack} disabled={!currentTargetId || disabled}>{ability.name}</button>;
 }
 
 export default function AbilityBar({player}: AbilityBarProps) {
@@ -38,7 +39,7 @@ export default function AbilityBar({player}: AbilityBarProps) {
 
     return (
         <ul>
-            <li><AbilityButton playerId={player.id} disabled={isDead} /></li>
+            {player.abilities.map(ability => <li key={ability.id}><AbilityButton ability={ability} playerId={player.id} disabled={isDead} /></li>)}
         </ul>
     )
 }

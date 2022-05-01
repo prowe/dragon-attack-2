@@ -14,6 +14,7 @@ function CharacterStatusDisplay({gameCharacter}: {gameCharacter: AreaCharacterFr
         variables: {
             characterId
         },
+        shouldResubscribe: true,
         onSubscriptionData({subscriptionData, client}) {
             client.cache.modify({
                 id: client.cache.identify(gameCharacter),

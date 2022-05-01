@@ -1,6 +1,6 @@
 import { useMutation } from "@apollo/client";
 import { FormEventHandler } from "react"
-import { JoinGameDocument, JoinGameMutation, JoinGameMutationVariables } from "./generated/graphql";
+import { JoinGameDocument } from "./generated/graphql";
 
 export interface JoinGameFormProps {
     setCurrentPlayerId: (playerId: string) => void;

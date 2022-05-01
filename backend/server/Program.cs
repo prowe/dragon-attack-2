@@ -49,24 +49,34 @@ namespace DragonAttack
         {
             builder.Host.UseOrleans(siloBuilder =>
             {
+                var config = builder.Configuration;
                 siloBuilder.UseLocalhostClustering();
-                siloBuilder.AddAzureQueueStreams("default", optionsBuilder => 
+                if (config.GetValue<bool>("UseAzureStorage", false))
                 {
-                    optionsBuilder.Configure(options=> {
-                        var queueConnectionString = builder.Configuration.GetConnectionString("StreamProvider");
-                        options.ConfigureQueueServiceClient(queueConnectionString);
+                    siloBuilder.AddAzureQueueStreams("default", optionsBuilder => 
+                    {
+                        optionsBuilder.Configure(options=> {
+                            var queueConnectionString = config.GetConnectionString("StreamProvider");
+                            options.ConfigureQueueServiceClient(queueConnectionString);
+                        });
                     });
-                });
-                siloBuilder.AddAzureTableGrainStorage("PubSubStore", options =>
+                    siloBuilder.AddAzureTableGrainStorage("PubSubStore", options =>
+                    {
+                        options.UseJson = true;
+                        options.ConfigureTableServiceClient(config.GetConnectionString("GrainStorage"));
+                    });
+                    siloBuilder.AddAzureTableGrainStorageAsDefault(options =>
+                    {
+                        options.UseJson = true;
+                        options.ConfigureTableServiceClient(config.GetConnectionString("GrainStorage"));
+                    });
+                }
+                else
                 {
-                    options.UseJson = true;
-                    options.ConfigureTableServiceClient(builder.Configuration.GetConnectionString("GrainStorage"));
-                });
-                siloBuilder.AddAzureTableGrainStorageAsDefault(options =>
-                {
-                    options.UseJson = true;
-                    options.ConfigureTableServiceClient(builder.Configuration.GetConnectionString("GrainStorage"));
-                });
+                    siloBuilder.AddSimpleMessageStreamProvider("default");
+                    siloBuilder.AddMemoryGrainStorageAsDefault();
+                    siloBuilder.AddMemoryGrainStorage("PubSubStore");
+                }
             });
         }
     }

@@ -60,8 +60,6 @@ namespace DragonAttack
         private readonly ILogger<GameCharacterGrain> logger;
         private readonly IClusterClient clusterClient;
         private readonly IPersistentState<GameCharacter> gameCharacterState;
-        private INPCController? controller;
-        private IDisposable? controllerTurnHandle;
 
         public GameCharacterGrain(
             ILogger<GameCharacterGrain> logger, 
@@ -71,12 +69,6 @@ namespace DragonAttack
             this.logger = logger;
             this.clusterClient = clusterClient;
             this.gameCharacterState = gameCharacterState;
-        }
-
-        public override Task OnActivateAsync()
-        {
-            SetupControllerIfNeeded();
-            return base.OnActivateAsync();
         }
 
         private IAsyncStream<IGameCharacterEvent> EventStream => clusterClient
@@ -92,7 +84,6 @@ namespace DragonAttack
                 throw new AlreadySpawnedException();
             }
             gameCharacterState.State = gameCharacter;
-            SetupControllerIfNeeded();
             var enterAreaEvent = new CharacterEnteredAreaEvent
             {
                 AreaId = gameCharacter.LocationAreaId,
@@ -104,16 +95,6 @@ namespace DragonAttack
                 .OnNextAsync(enterAreaEvent);
             await gameCharacterState.WriteStateAsync();
             logger.LogInformation("Spawned character {character}", gameCharacter);
-        }
-
-        private void SetupControllerIfNeeded()
-        {
-            if (gameCharacterState.State.IsPlayerCharacter)
-            {
-                return;
-            }
-            controller = this.ServiceProvider.GetRequiredService<INPCController>();
-            controllerTurnHandle = RegisterTimer(obj => controller.TakeTurn(this), null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
         }
 
         public async Task<int> UseAbility(Guid abilityId, params Guid[] targetIds)
@@ -148,7 +129,6 @@ namespace DragonAttack
                 Difference = actualDelta,
                 ResultingHealthPercent = gameCharacterState.State.CurrentHealthPercent
             };
-            controller?.OnHealthChange(healthChangedEvent);
             await EventStream.OnNextAsync(healthChangedEvent);
 
             //TODO: debounce

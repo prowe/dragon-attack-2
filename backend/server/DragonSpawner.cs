@@ -26,7 +26,18 @@ namespace DragonAttack
                     CurrentHitPoints = 1000,
                     TotalHitPoints = 1000,
                     LocationAreaId = IAreaGrain.StartingArea,
+                    Abilities = new List<Ability>
+                    {
+                        new Ability
+                        {
+                            Id = Guid.NewGuid(),
+                            Name = "Claw",
+                            Effect = AbilityEffect.Damage,
+                            Dice = new DiceSpecification { Rolls = 3, Sides = 6}
+                        }
+                    }
                 });
+                await clusterClient.GetGrain<INPCControllerGrain>(dragonId).TakeControl(dragonId);
                 logger.LogWarning("Dragon spawned");
             } 
             catch (AlreadySpawnedException)

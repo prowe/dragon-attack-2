@@ -1,95 +1,119 @@
 using System.Collections;
 using Orleans;
+using Orleans.Streaming;
 using System.Linq;
+using Orleans.Streams;
 
 namespace DragonAttack
 {
-    public interface INPCController
+    public interface INPCControllerGrain : IGrainWithGuidKey
     {
-        Task TakeTurn(IGameCharacterGrain characterGrain);
-
-        void OnHealthChange(HealthChangedEvent attackedEvent);
+        public Task TakeControl(Guid gameCharacterId);
     }
 
-    public class DragonController : INPCController
+    public class NPCControllerGrain : Orleans.Grain, INPCControllerGrain
     {
-        private readonly ILogger<DragonController> logger;
         private readonly IClusterClient clusterClient;
-        private readonly HateList hateList = new HateList();
-        private int flameBreathCooldownRemaining = 5;
+        private readonly ILogger<NPCControllerGrain> logger;
+        private IGameCharacterGrain gameCharacter;
+        private Dictionary<Guid, HateListEntry> hateList = new Dictionary<Guid, HateListEntry>();
 
-        public DragonController(ILogger<DragonController> logger, IClusterClient clusterClient)
+        public NPCControllerGrain(IClusterClient clusterClient, ILogger<NPCControllerGrain> logger)
         {
-            this.logger = logger;
             this.clusterClient = clusterClient;
+            this.logger = logger;
         }
 
-        public void OnHealthChange(HealthChangedEvent attackedEvent)
+        public async Task TakeControl(Guid gameCharacterId)
         {
-            if (attackedEvent.Difference < 0)
+            this.gameCharacter = clusterClient.GetGrain<IGameCharacterGrain>(gameCharacterId);
+            await GetGameCharacterStream(gameCharacterId).SubscribeAsync(HandleCharacterEvent);
+            RegisterTimer(TakeTurn, null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
+        }
+
+        private Task HandleCharacterEvent(IGameCharacterEvent characterEvent, StreamSequenceToken token)
+        {
+            return characterEvent switch {
+                HealthChangedEvent healthChangedEvent => OnHealthChange(healthChangedEvent),
+                _ => Task.CompletedTask,
+            };
+        }
+
+        private async Task OnHealthChange(HealthChangedEvent healthChangedEvent)
+        {
+            if (healthChangedEvent.Difference >= 0)
             {
-                var damage = attackedEvent.Difference * -1;
-                logger.LogInformation("Logging damage taken {damage}", damage);
-                hateList.RegisterDamage(attackedEvent.Source, damage);
+                return;
+            }
+            if (hateList.TryGetValue(healthChangedEvent.Source, out var entry))
+            {
+                entry.damage -= healthChangedEvent.Difference;
+            }
+            else
+            {
+                var handle = await GetGameCharacterStream(healthChangedEvent.Source).SubscribeAsync(HandleHatedCharacterEvent);
+                hateList[healthChangedEvent.Source] = new HateListEntry(-1 * healthChangedEvent.Difference, handle);
             }
         }
 
-        public Task TakeTurn(IGameCharacterGrain characterGrain)
+        private async Task HandleHatedCharacterEvent(IGameCharacterEvent characterEvent, StreamSequenceToken token)
         {
-            // logger.LogInformation("Taking a turn {id}", characterGrain.GetPrimaryKey());
-            // if (flameBreathCooldownRemaining == 0)
-            // {
-            //     await ExecuteFlameBreath(characterGrain);
-            //     flameBreathCooldownRemaining = 5;
-            //     return;
-            // }
-
-            // if (!hateList.Empty)
-            // {
-            //     var mostHatedId = hateList.First().Key;
-            //     await characterGrain.UseAbility("claw", mostHatedId);
-            //     flameBreathCooldownRemaining--;
-            // }
-            return Task.CompletedTask;
+            if (characterEvent is HealthChangedEvent healthChanged)
+            {
+                var targetId = healthChanged.Target;
+                if(healthChanged.ResultingHealthPercent == 0
+                    && hateList.TryGetValue(targetId, out var entry))
+                {
+                    await entry.subscriptionHandle.UnsubscribeAsync();
+                    hateList.Remove(targetId);
+                    logger.LogInformation("Forgot dead character from hatelist {id}",targetId);
+                }
+            }
         }
 
-        // private async Task ExecuteFlameBreath(IGameCharacterGrain characterGrain)
-        // {
-        //     var state = await characterGrain.GetState();
-        //     var myId = characterGrain.GetPrimaryKey();
-        //     var area = clusterClient.GetGrain<IAreaGrain>(state.LocationAreaId);
-        //     logger.LogInformation("Executing Flame Breath, {areaId}", state.LocationAreaId);
-        //     var areaState = await area.GetState();
-        //     var targetIds = areaState.CharactersPresentIds
-        //         .Where(id => id != myId)
-        //         .ToArray();
-        //     logger.LogInformation("Flame Breath targets: {myId} -> {targetIds}", myId, targetIds);
-        //     if (targetIds.Any())
-        //     {
-        //         await characterGrain.UseAbility("flame-breath", targetIds);
-        //     }
-        // }
-    }
-
-    public class HateList : IEnumerable<KeyValuePair<Guid, int>>
-    {
-        private Dictionary<Guid, int> values = new Dictionary<Guid, int>();
-
-        public void RegisterDamage(Guid attacker, int damage)
+        private async Task TakeTurn(object _)
         {
-            var currentDamage = values.TryGetValue(attacker, out int perviousDamage) ? perviousDamage : 0;
-            values[attacker] = currentDamage + damage;
+            logger.LogInformation("Taking a turn {id}", this.GetPrimaryKey());
+            var ability = await ChooseAbility();
+            var targets = ChooseTargets(ability);
+            if(targets.Any())
+            {
+                await gameCharacter.UseAbility(ability.Id, targets.ToArray());
+            }
         }
 
-        public bool Empty => !values.Any();
-
-        public IEnumerator<KeyValuePair<Guid, int>> GetEnumerator()
+        private async Task<Ability> ChooseAbility()
         {
-            return values.AsEnumerable()
-                .OrderByDescending(kp => kp.Value)
-                .GetEnumerator();
+            var state = await gameCharacter.GetState();
+            return state.Abilities.First();
         }
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        private IEnumerable<Guid> ChooseTargets(Ability ability)
+        {
+            if (!hateList.Any())
+            {
+                return Array.Empty<Guid>();
+            }
+            return hateList
+                .OrderByDescending(kv => kv.Value.damage)
+                .Take(1)
+                .Select(kv => kv.Key);
+        }
+
+        private IAsyncStream<IGameCharacterEvent> GetGameCharacterStream(Guid id)
+        {
+            return clusterClient.GetStreamProvider("default").GetStream<IGameCharacterEvent>(id, nameof(IGameCharacterEvent));
+        }
+
+        private class HateListEntry
+        {
+            public int damage = 0;
+            internal readonly StreamSubscriptionHandle<IGameCharacterEvent> subscriptionHandle;
+            public HateListEntry(int initialDamage, StreamSubscriptionHandle<IGameCharacterEvent> handle)
+            {
+                this.subscriptionHandle = handle;
+                this.damage = initialDamage;
+            }
+        }
     }
 }

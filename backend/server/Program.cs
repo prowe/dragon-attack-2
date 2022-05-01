@@ -27,7 +27,6 @@ namespace DragonAttack
         private static void ConfigureServices(IServiceCollection services)
         {
             services.AddCors();
-            services.AddTransient<INPCController, DragonController>();
             services.AddSingleton<Mutation>();
             services.AddSingleton<Query>();
             services.AddSingleton<Subscription>();

@@ -18,6 +18,7 @@ namespace DragonAttack
         private readonly IDictionary<Guid, Ability> abilityMap;
         private IGameCharacterGrain gameCharacter;
         private Dictionary<Guid, HateListEntry> hateList = new Dictionary<Guid, HateListEntry>();
+        private Dictionary<Guid, DateTime> abilitiesOnCooldown = new Dictionary<Guid, DateTime>();
 
         public NPCControllerGrain(
             IClusterClient clusterClient, 
@@ -79,30 +80,62 @@ namespace DragonAttack
         private async Task TakeTurn(object _)
         {
             logger.LogInformation("Taking a turn {id}", this.GetPrimaryKey());
-            var ability = await ChooseAbility();
-            var targets = ChooseTargets(ability);
+            CleanupCooldowns();
+            var currentState = await gameCharacter.GetState();
+            var ability = ChooseAbility(currentState);
+            var targets = await ChooseTargets(ability, currentState);
             if(targets.Any())
             {
+                logger.LogInformation("Using ability {abilityid} ({abilityName}) on {targetIds}", ability.Id, ability.Name, targets);
                 await gameCharacter.UseAbility(ability.Id, targets.ToArray());
+                RegisterCooldown(ability);
             }
         }
 
-        private async Task<Ability> ChooseAbility()
+        private void RegisterCooldown(Ability ability)
         {
-            var state = await gameCharacter.GetState();
-            return state.Abilities(abilityMap).First();
-        }
-
-        private IEnumerable<Guid> ChooseTargets(Ability ability)
-        {
-            if (!hateList.Any())
+            if (ability.Cooldown > TimeSpan.Zero)
             {
-                return Array.Empty<Guid>();
+                abilitiesOnCooldown[ability.Id] = DateTime.Now + ability.Cooldown;
             }
-            return hateList
-                .OrderByDescending(kv => kv.Value.damage)
-                .Take(1)
-                .Select(kv => kv.Key);
+        }
+
+        private void CleanupCooldowns()
+        {
+            var now = DateTime.Now;
+            abilitiesOnCooldown
+                .Where(kv => kv.Value < now)
+                .ToList()
+                .ForEach(kv => abilitiesOnCooldown.Remove(kv.Key));
+        }
+
+        private Ability ChooseAbility(GameCharacter currentState)
+        {
+            var bestNotOnCooldown = currentState.Abilities(abilityMap)
+                .Where(a => !abilitiesOnCooldown.ContainsKey(a.Id))
+                .OrderByDescending(a => a.Dice.Average)
+                .FirstOrDefault();
+            return bestNotOnCooldown;
+        }
+
+        private async Task<IEnumerable<Guid>> ChooseTargets(Ability ability, GameCharacter currentState)
+        {
+            return ability.TargetType switch
+            {
+                TargetType.Single => hateList
+                    .OrderByDescending(kv => kv.Value.damage)
+                    .Take(1)
+                    .Select(kv => kv.Key),
+                TargetType.Area => await GetOtherCharactersInArea(currentState.LocationAreaId),
+                _ => Enumerable.Empty<Guid>(),
+            };
+        }
+
+        private async Task<IEnumerable<Guid>> GetOtherCharactersInArea(Guid areaId)
+        {
+            var area = await clusterClient.GetGrain<IAreaGrain>(areaId).GetState();
+            return area.CharactersPresentIds
+                .Where(id => id != gameCharacter.GetPrimaryKey());
         }
 
         private IAsyncStream<IGameCharacterEvent> GetGameCharacterStream(Guid id)

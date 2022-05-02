@@ -96,7 +96,9 @@ namespace DragonAttack
                     Id = Guid.Parse("666e12fa-9bb8-4420-b38e-37d987447633"),
                     Name = "Flame Breath",
                     Effect = AbilityEffect.Damage,
-                    Dice = new DiceSpecification { Rolls = 4, Sides = 6}
+                    Dice = new DiceSpecification { Rolls = 4, Sides = 6},
+                    TargetType = TargetType.Area,
+                    Cooldown = TimeSpan.FromSeconds(14),
                 },
                 new Ability
                 {

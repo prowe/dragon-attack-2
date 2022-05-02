@@ -38,7 +38,7 @@ function CharacterStatusDisplay({gameCharacter}: {gameCharacter: AreaCharacterFr
 
 export default function CharactersList({characters}: CharactersListProps) {
     return (
-        <ul>
+        <ul className={styles.list}>
             {characters.map(c => <CharacterStatusDisplay key={c.id} gameCharacter={c} />)}
         </ul>
     );

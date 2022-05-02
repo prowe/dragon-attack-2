@@ -1,6 +1,15 @@
+.list {
+    display: flex;
+    flex-direction: row;
+    gap: .5rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
 .statusContainer {
     border: solid black thin;
-    max-width: 50rem;
+    width: 10rem;
     padding: 1rem;
 }
 .statusContainer > * {

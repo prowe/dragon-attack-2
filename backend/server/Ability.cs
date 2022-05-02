@@ -6,11 +6,19 @@ namespace DragonAttack
         public String Name { get; set; }
         public DiceSpecification Dice { get; set; }
         public AbilityEffect Effect { get; set; }
+        public TargetType TargetType { get; set; } = TargetType.Single;
+        public TimeSpan Cooldown { get; set; } = TimeSpan.Zero;
     }
 
     public enum AbilityEffect
     {
         Damage
+    }
+
+    public enum TargetType
+    {
+        Single,
+        Area
     }
 
     public class DiceSpecification
@@ -25,5 +33,9 @@ namespace DragonAttack
                 .Select(_ => Random.Shared.Next(Sides) + 1)
                 .Sum() + Constant;
         }
+
+        public int Max => Sides * Rolls + Constant;
+        public int Min => Rolls + Constant;
+        public float Average => ((float)Min + (float)Max)  / 2;
     }
 }

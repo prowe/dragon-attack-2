@@ -2,7 +2,7 @@ import { Reference, useQuery, useSubscription } from "@apollo/client";
 import AbilityBar from "./AbilityBar";
 import CharactersList from "./CharactersList";
 import { CurrentTargetProvider } from "./CurrentTargetContext";
-import { AreaCharacterFragmentDoc, GetCurrentPlayerDocument, GetCurrentPlayerQuery, WatchAreaDocument } from "./generated/graphql";
+import { AreaCharacterFragment, AreaCharacterFragmentDoc, GetCurrentPlayerDocument, GetCurrentPlayerQuery, WatchAreaDocument } from "./generated/graphql";
 
 export interface GameInterfaceProps{
     playerId: string;
@@ -54,6 +54,10 @@ export default function GameInterface({playerId}: GameInterfaceProps) {
         return <progress />;
     }
     const isDead = player.currentHealthPercent <= 0;
+    const charactersInOrder: AreaCharacterFragment[] = [
+        player,
+        ...player.location.charactersPresent.filter(c => c.id !== playerId)
+    ];
 
     return (
         <CurrentTargetProvider>
@@ -62,7 +66,7 @@ export default function GameInterface({playerId}: GameInterfaceProps) {
                     {isDead && <span>(Dead)</span>}
                 </h1>
                 
-                <CharactersList characters={player.location.charactersPresent} />
+                <CharactersList characters={charactersInOrder} />
                 <AbilityBar player={player} />
             </main>
         </CurrentTargetProvider>

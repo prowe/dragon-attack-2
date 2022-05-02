@@ -2,6 +2,7 @@ import { GetCurrentPlayerQuery, PlayerAbilityFragment } from "./generated/graphq
 import { useMutation } from "@apollo/client";
 import { UseAbilityDocument } from "./generated/graphql";
 import useCurrentTarget from "./CurrentTargetContext";
+import styles from './AbilityBar.module.css';
 
 export interface AbilityBarProps {
     player: GetCurrentPlayerQuery['player'];
@@ -38,7 +39,7 @@ export default function AbilityBar({player}: AbilityBarProps) {
     const isDead = player.currentHealthPercent <= 0;
 
     return (
-        <ul>
+        <ul className={styles.list}>
             {player.abilities.map(ability => <li key={ability.id}><AbilityButton ability={ability} playerId={player.id} disabled={isDead} /></li>)}
         </ul>
     )

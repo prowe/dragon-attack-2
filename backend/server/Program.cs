@@ -41,6 +41,7 @@ namespace DragonAttack
                 .AddType<HealthChangedEvent>()
                 .AddType<CharacterEnteredAreaEvent>();
 
+            services.AddSingleton<IDictionary<Guid, Ability>>(BuildAbilityMap);
             services.AddHostedService<DragonSpawner>();
         }
 
@@ -77,6 +78,42 @@ namespace DragonAttack
                     siloBuilder.AddMemoryGrainStorage("PubSubStore");
                 }
             });
+        }
+
+        private static IDictionary<Guid, Ability> BuildAbilityMap(IServiceProvider services)
+        {
+            var abilities = new []
+            {
+                new Ability
+                {
+                    Id = Guid.Parse("7d86e255-72b0-43e6-9d64-ec19d90ae353"),
+                    Name = "Claw",
+                    Effect = AbilityEffect.Damage,
+                    Dice = new DiceSpecification { Rolls = 3, Sides = 6}
+                },
+                new Ability
+                {
+                    Id = Guid.Parse("666e12fa-9bb8-4420-b38e-37d987447633"),
+                    Name = "Flame Breath",
+                    Effect = AbilityEffect.Damage,
+                    Dice = new DiceSpecification { Rolls = 4, Sides = 6}
+                },
+                new Ability
+                {
+                    Id = Guid.Parse("566c8543-4ba1-4cdf-b921-b811c3a8db52"),
+                    Name = "Stab",
+                    Dice = new DiceSpecification { Rolls = 1, Sides = 6, Constant = 0},
+                    Effect = AbilityEffect.Damage
+                },
+                new Ability
+                {
+                    Id = Guid.Parse("781c7a2a-21e0-4203-ad6d-045696250ff9"),
+                    Name = "Slash",
+                    Dice = new DiceSpecification { Rolls = 2, Sides = 4, Constant = 0},
+                    Effect = AbilityEffect.Damage
+                }
+            };
+            return abilities.ToDictionary(ab => ab.Id);
         }
     }
 }

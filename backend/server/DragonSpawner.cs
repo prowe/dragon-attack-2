@@ -26,15 +26,10 @@ namespace DragonAttack
                     CurrentHitPoints = 1000,
                     TotalHitPoints = 1000,
                     LocationAreaId = IAreaGrain.StartingArea,
-                    Abilities = new List<Ability>
+                    AbilityIds = new[] 
                     {
-                        new Ability
-                        {
-                            Id = Guid.NewGuid(),
-                            Name = "Claw",
-                            Effect = AbilityEffect.Damage,
-                            Dice = new DiceSpecification { Rolls = 3, Sides = 6}
-                        }
+                        Guid.Parse("7d86e255-72b0-43e6-9d64-ec19d90ae353"),
+                        Guid.Parse("666e12fa-9bb8-4420-b38e-37d987447633"),
                     }
                 });
                 await clusterClient.GetGrain<INPCControllerGrain>(dragonId).TakeControl(dragonId);

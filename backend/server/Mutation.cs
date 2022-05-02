@@ -25,22 +25,10 @@ namespace DragonAttack
                 TotalHitPoints = 100,
                 CurrentHitPoints = 100,
                 LocationAreaId = IAreaGrain.StartingArea,
-                Abilities = new List<Ability>
+                AbilityIds = new[]
                 {
-                    new Ability
-                    {
-                        Id = Guid.NewGuid(),
-                        Name = "Stab",
-                        Dice = new DiceSpecification { Rolls = 1, Sides = 6, Constant = 0},
-                        Effect = AbilityEffect.Damage
-                    },
-                    new Ability
-                    {
-                        Id = Guid.NewGuid(),
-                        Name = "Slash",
-                        Dice = new DiceSpecification { Rolls = 2, Sides = 4, Constant = 0},
-                        Effect = AbilityEffect.Damage
-                    }
+                    Guid.Parse("566c8543-4ba1-4cdf-b921-b811c3a8db52"),
+                    Guid.Parse("781c7a2a-21e0-4203-ad6d-045696250ff9"),
                 }
             };
             await clusterClient.GetGrain<IGameCharacterGrain>(id).Spawn(player);

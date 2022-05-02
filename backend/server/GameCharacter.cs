@@ -11,7 +11,13 @@ namespace DragonAttack
         public int TotalHitPoints { get; set; }
         public int CurrentHitPoints { get; set; }
         public Guid LocationAreaId { get; set; }
-        public List<Ability> Abilities { get; set; }
+        internal IEnumerable<Guid> AbilityIds { get; set; } 
+        public List<Ability> Abilities([Service] IDictionary<Guid, Ability> abilityMap)
+        {
+            return (AbilityIds ?? Enumerable.Empty<Guid>())
+                .Select(id => abilityMap[id])
+                .ToList();
+        }
 
         public bool IsPlayerCharacter { get; set; } = true;
 
@@ -59,15 +65,18 @@ namespace DragonAttack
     {
         private readonly ILogger<GameCharacterGrain> logger;
         private readonly IClusterClient clusterClient;
+        private readonly IDictionary<Guid, Ability> abilityMap;
         private readonly IPersistentState<GameCharacter> gameCharacterState;
 
         public GameCharacterGrain(
             ILogger<GameCharacterGrain> logger, 
             IClusterClient clusterClient,
+            IDictionary<Guid, Ability> abilityMap,
             [PersistentState("GameCharacter")] IPersistentState<GameCharacter> gameCharacterState)
         {
             this.logger = logger;
             this.clusterClient = clusterClient;
+            this.abilityMap = abilityMap;
             this.gameCharacterState = gameCharacterState;
         }
 
@@ -100,7 +109,7 @@ namespace DragonAttack
         public async Task<int> UseAbility(Guid abilityId, params Guid[] targetIds)
         {
             logger.LogInformation("Attacking {targets}", targetIds);
-            var ability = gameCharacterState.State.Abilities.Single(a => a.Id == abilityId);
+            var ability = abilityMap[abilityId];
             var multiplyer = ability.Effect == AbilityEffect.Damage ? -1 : 1;
             var damages = await Task.WhenAll(targetIds.Select(async targetId =>
             {

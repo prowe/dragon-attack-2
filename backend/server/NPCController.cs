@@ -15,13 +15,18 @@ namespace DragonAttack
     {
         private readonly IClusterClient clusterClient;
         private readonly ILogger<NPCControllerGrain> logger;
+        private readonly IDictionary<Guid, Ability> abilityMap;
         private IGameCharacterGrain gameCharacter;
         private Dictionary<Guid, HateListEntry> hateList = new Dictionary<Guid, HateListEntry>();
 
-        public NPCControllerGrain(IClusterClient clusterClient, ILogger<NPCControllerGrain> logger)
+        public NPCControllerGrain(
+            IClusterClient clusterClient, 
+            ILogger<NPCControllerGrain> logger,
+            IDictionary<Guid, Ability> abilityMap)
         {
             this.clusterClient = clusterClient;
             this.logger = logger;
+            this.abilityMap = abilityMap;
         }
 
         public async Task TakeControl(Guid gameCharacterId)
@@ -85,7 +90,7 @@ namespace DragonAttack
         private async Task<Ability> ChooseAbility()
         {
             var state = await gameCharacter.GetState();
-            return state.Abilities.First();
+            return state.Abilities(abilityMap).First();
         }
 
         private IEnumerable<Guid> ChooseTargets(Ability ability)

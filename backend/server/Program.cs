@@ -97,7 +97,7 @@ namespace DragonAttack
                     Name = "Flame Breath",
                     Effect = AbilityEffect.Damage,
                     Dice = new DiceSpecification { Rolls = 4, Sides = 6},
-                    TargetType = TargetType.Area,
+                    MaxTargets = 1000,
                     Cooldown = TimeSpan.FromSeconds(14),
                 },
                 new Ability

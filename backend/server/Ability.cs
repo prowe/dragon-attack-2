@@ -6,7 +6,7 @@ namespace DragonAttack
         public String Name { get; set; }
         public DiceSpecification Dice { get; set; }
         public AbilityEffect Effect { get; set; }
-        public TargetType TargetType { get; set; } = TargetType.Single;
+        public int MaxTargets { get; set; } = 1;
         public TimeSpan Cooldown { get; set; } = TimeSpan.Zero;
     }
 

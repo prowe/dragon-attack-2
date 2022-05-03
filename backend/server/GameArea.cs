@@ -21,6 +21,8 @@ namespace DragonAttack
         public static readonly Guid StartingArea = Guid.Parse("3A3F5245-BE2F-4DC8-AEE1-1EDB84025F17");
 
         public Task<Area> GetState();
+
+        public Task<ISet<Guid>> GetPresentCharacterIds();
     }
 
     [UnionType("AreaEvent")]
@@ -86,11 +88,18 @@ namespace DragonAttack
 
         public Task<Area> GetState() => Task.FromResult(areaState.State ?? throw new NullReferenceException());
 
+        public Task<ISet<Guid>> GetPresentCharacterIds()
+        {
+            var present = areaState.State?.CharactersPresentIds ?? Enumerable.Empty<Guid>();
+            ISet<Guid> presentSet = present.ToHashSet();
+            return Task.FromResult(presentSet);
+        }
+
         public Task OnCompletedAsync() => Task.CompletedTask;
 
         public Task OnErrorAsync(Exception ex) => Task.CompletedTask;
         
-        public async Task OnNextAsync(IAreaEvent item, StreamSequenceToken? token = null)
+        public async Task OnNextAsync(IAreaEvent item, StreamSequenceToken token = null)
         {
             logger.LogInformation("Got event: {event}", item);
             switch (item)

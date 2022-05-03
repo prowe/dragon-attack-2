@@ -4,6 +4,12 @@ using Orleans.Streaming;
 using System.Linq;
 using Orleans.Streams;
 
+
+/*
+Watch area
+everyone in hate list
+number of targets instead of type
+*/
 namespace DragonAttack
 {
     public interface INPCControllerGrain : IGrainWithGuidKey
@@ -19,6 +25,8 @@ namespace DragonAttack
         private IGameCharacterGrain gameCharacter;
         private Dictionary<Guid, HateListEntry> hateList = new Dictionary<Guid, HateListEntry>();
         private Dictionary<Guid, DateTime> abilitiesOnCooldown = new Dictionary<Guid, DateTime>();
+        private StreamSubscriptionHandle<IGameCharacterEvent> gameCharacterStreamHandle;
+        private StreamSubscriptionHandle<IAreaEvent> areaStreamHandle;
 
         public NPCControllerGrain(
             IClusterClient clusterClient, 
@@ -33,8 +41,27 @@ namespace DragonAttack
         public async Task TakeControl(Guid gameCharacterId)
         {
             this.gameCharacter = clusterClient.GetGrain<IGameCharacterGrain>(gameCharacterId);
-            await GetGameCharacterStream(gameCharacterId).SubscribeAsync(HandleCharacterEvent);
+            gameCharacterStreamHandle = await GetGameCharacterStream(gameCharacterId).SubscribeAsync(HandleCharacterEvent);
+            await SetupHateList();
             RegisterTimer(TakeTurn, null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
+        }
+
+        private async Task SetupHateList()
+        {
+            var currentState = await gameCharacter.GetState();
+            var areaId = currentState.LocationAreaId;
+            areaStreamHandle = await clusterClient.GetStreamProvider("default")
+                .GetStream<IAreaEvent>(areaId, nameof(IAreaGrain))
+                .SubscribeAsync((areaEvent, token) => areaEvent switch
+                {
+                    CharacterEnteredAreaEvent enteredEvent => RegisterHateForCharacter(enteredEvent.GameCharacterId, 0),
+                    _ => Task.CompletedTask,
+                });
+            var areaCharacterIds = await clusterClient.GetGrain<IAreaGrain>(areaId).GetPresentCharacterIds();
+            await Task.WhenAll(areaCharacterIds
+                .Where(id => id != gameCharacter.GetPrimaryKey())
+                .Select(id => RegisterHateForCharacter(id, 0))
+            );
         }
 
         private Task HandleCharacterEvent(IGameCharacterEvent characterEvent, StreamSequenceToken token)
@@ -47,18 +74,22 @@ namespace DragonAttack
 
         private async Task OnHealthChange(HealthChangedEvent healthChangedEvent)
         {
-            if (healthChangedEvent.Difference >= 0)
+            if (healthChangedEvent.Difference < 0)
             {
-                return;
+                await RegisterHateForCharacter(healthChangedEvent.Source, healthChangedEvent.Difference * -1);
             }
-            if (hateList.TryGetValue(healthChangedEvent.Source, out var entry))
+        }
+
+        private async Task RegisterHateForCharacter(Guid gameCharacterId, int hate)
+        {
+            if (hateList.TryGetValue(gameCharacterId, out var entry))
             {
-                entry.damage -= healthChangedEvent.Difference;
+                entry.hate += hate;
             }
             else
             {
-                var handle = await GetGameCharacterStream(healthChangedEvent.Source).SubscribeAsync(HandleHatedCharacterEvent);
-                hateList[healthChangedEvent.Source] = new HateListEntry(-1 * healthChangedEvent.Difference, handle);
+                var handle = await GetGameCharacterStream(gameCharacterId).SubscribeAsync(HandleHatedCharacterEvent);
+                hateList[gameCharacterId] = new HateListEntry(hate, handle);
             }
         }
 
@@ -83,11 +114,11 @@ namespace DragonAttack
             CleanupCooldowns();
             var currentState = await gameCharacter.GetState();
             var ability = ChooseAbility(currentState);
-            var targets = await ChooseTargets(ability, currentState);
+            var targets = ChooseTargets(ability);
             if(targets.Any())
             {
                 logger.LogInformation("Using ability {abilityid} ({abilityName}) on {targetIds}", ability.Id, ability.Name, targets);
-                await gameCharacter.UseAbility(ability.Id, targets.ToArray());
+                await gameCharacter.UseAbility(ability.Id, targets);
                 RegisterCooldown(ability);
             }
         }
@@ -118,17 +149,13 @@ namespace DragonAttack
             return bestNotOnCooldown;
         }
 
-        private async Task<IEnumerable<Guid>> ChooseTargets(Ability ability, GameCharacter currentState)
+        private Guid[] ChooseTargets(Ability ability)
         {
-            return ability.TargetType switch
-            {
-                TargetType.Single => hateList
-                    .OrderByDescending(kv => kv.Value.damage)
-                    .Take(1)
-                    .Select(kv => kv.Key),
-                TargetType.Area => await GetOtherCharactersInArea(currentState.LocationAreaId),
-                _ => Enumerable.Empty<Guid>(),
-            };
+            return hateList
+                .OrderByDescending(kv => kv.Value.hate)
+                .Take(ability.MaxTargets)
+                .Select(kv => kv.Key)
+                .ToArray();
         }
 
         private async Task<IEnumerable<Guid>> GetOtherCharactersInArea(Guid areaId)
@@ -145,12 +172,12 @@ namespace DragonAttack
 
         private class HateListEntry
         {
-            public int damage = 0;
+            public int hate = 0;
             internal readonly StreamSubscriptionHandle<IGameCharacterEvent> subscriptionHandle;
-            public HateListEntry(int initialDamage, StreamSubscriptionHandle<IGameCharacterEvent> handle)
+            public HateListEntry(int initalHate, StreamSubscriptionHandle<IGameCharacterEvent> handle)
             {
                 this.subscriptionHandle = handle;
-                this.damage = initialDamage;
+                this.hate = initalHate;
             }
         }
     }

@@ -1,6 +1,6 @@
 import { Reference, useQuery, useSubscription } from "@apollo/client";
-import AbilityBar from "./AbilityBar";
-import CharactersList from "./CharactersList";
+import AbilityBar from "./ability-bar/AbilityBar";
+import CharactersList from "./character-list/CharactersList";
 import { CurrentTargetProvider } from "./CurrentTargetContext";
 import { AreaCharacterFragment, AreaCharacterFragmentDoc, GetCurrentPlayerDocument, GetCurrentPlayerQuery, WatchAreaDocument } from "./generated/graphql";
 import styles from './GameInterface.module.css';

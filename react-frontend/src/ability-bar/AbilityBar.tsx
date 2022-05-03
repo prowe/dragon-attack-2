@@ -1,7 +1,7 @@
-import { GetCurrentPlayerQuery, PlayerAbilityFragment } from "./generated/graphql";
+import { GetCurrentPlayerQuery, PlayerAbilityFragment } from "../generated/graphql";
 import { useMutation } from "@apollo/client";
-import { UseAbilityDocument } from "./generated/graphql";
-import useCurrentTarget from "./CurrentTargetContext";
+import { UseAbilityDocument } from "../generated/graphql";
+import useCurrentTarget from "../CurrentTargetContext";
 import styles from './AbilityBar.module.css';
 
 export interface AbilityBarProps {

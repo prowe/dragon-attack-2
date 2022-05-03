@@ -1,7 +1,7 @@
 import { useSubscription } from "@apollo/client";
-import { AreaCharacterFragment, WatchCharacterDocument } from "./generated/graphql";
+import { AreaCharacterFragment, WatchCharacterDocument } from "../generated/graphql";
 import styles from './CharactersList.module.css';
-import useCurrentTarget from "./CurrentTargetContext";
+import useCurrentTarget from "../CurrentTargetContext";
 
 export interface CharactersListProps {
     characters: AreaCharacterFragment[];

@@ -1,7 +1,7 @@
 import { useMutation } from "@apollo/client";
 import { FormEventHandler } from "react"
-import { JoinGameDocument } from "./generated/graphql";
-
+import { JoinGameDocument } from "../generated/graphql";
+import styles from './JoinGameForm.module.css';
 export interface JoinGameFormProps {
     setCurrentPlayerId: (playerId: string) => void;
 }
@@ -25,7 +25,7 @@ export default function JoinGameForm({setCurrentPlayerId}: JoinGameFormProps) {
     };
 
     return (
-        <form onSubmit={onSubmit}>
+        <form onSubmit={onSubmit} className={styles.form}>
             {error && error.message}
             <label htmlFor="join-game-name">Name</label>
             <input name="name" required type="text" id="join-game-form" />

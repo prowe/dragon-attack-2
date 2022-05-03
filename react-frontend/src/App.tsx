@@ -1,9 +1,8 @@
-import './App.css'
 import { ApolloClient, ApolloProvider, InMemoryCache } from "@apollo/client";
 import { SubscriptionClient } from 'subscriptions-transport-ws'
 import { WebSocketLink } from '@apollo/client/link/ws';
 import { useState } from 'react';
-import JoinGameForm from './JoinGameForm';
+import JoinGameForm from './join-game/JoinGameForm';
 import GameInterface from './GameInterface';
 
 const subscriptionClient = new SubscriptionClient('ws://localhost:5000/graphql', {

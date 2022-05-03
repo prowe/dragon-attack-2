@@ -3,7 +3,7 @@ import AbilityBar from "./AbilityBar";
 import CharactersList from "./CharactersList";
 import { CurrentTargetProvider } from "./CurrentTargetContext";
 import { AreaCharacterFragment, AreaCharacterFragmentDoc, GetCurrentPlayerDocument, GetCurrentPlayerQuery, WatchAreaDocument } from "./generated/graphql";
-
+import styles from './GameInterface.module.css';
 export interface GameInterfaceProps{
     playerId: string;
 }
@@ -61,12 +61,13 @@ export default function GameInterface({playerId}: GameInterfaceProps) {
 
     return (
         <CurrentTargetProvider>
-            <main>
+            <main className={styles.main}>
                 <h1>Welcome {player.name}! 
                     {isDead && <span>(Dead)</span>}
                 </h1>
                 
                 <CharactersList characters={charactersInOrder} />
+                
                 <AbilityBar player={player} />
             </main>
         </CurrentTargetProvider>

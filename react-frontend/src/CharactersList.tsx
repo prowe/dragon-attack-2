@@ -29,7 +29,11 @@ function CharacterStatusDisplay({gameCharacter}: {gameCharacter: AreaCharacterFr
 
     return (
         <li className={styles.statusContainer} aria-selected={characterId === currentTargetId} onClick={() => setCurrentTargetId(characterId)}>
-            <label>{gameCharacter.name}{loading ?? '...'}</label>
+            <label>
+                {gameCharacter.name}
+                {loading ?? '...'}
+                {gameCharacter?.currentHealthPercent === 0 && ' (Dead)'}
+            </label>
             {error && <div>{error.message}</div>}
             <progress value={gameCharacter.currentHealthPercent} max={100} />
         </li>

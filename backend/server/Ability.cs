@@ -12,7 +12,8 @@ namespace DragonAttack
 
     public enum AbilityEffect
     {
-        Damage
+        Damage,
+        Heal
     }
 
     public enum TargetType

@@ -27,7 +27,7 @@ export default function JoinGameForm({setCurrentPlayerId}: JoinGameFormProps) {
     return (
         <form onSubmit={onSubmit} className={styles.form}>
             {error && error.message}
-            <label htmlFor="join-game-name">Name</label>
+            <label htmlFor="join-game-name">Player Name</label>
             <input name="name" required type="text" id="join-game-form" />
             <button disabled={loading} type='submit'>Join</button>
         </form>

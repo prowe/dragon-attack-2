@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
+    "public-dev": "VITE_GRAPHQL_ENDPOINT_WS=ws://$(ipconfig getifaddr en0):5000/graphql vite --host 0.0.0.0",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "graphql-codegen": "graphql-codegen",

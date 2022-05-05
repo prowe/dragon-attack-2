@@ -6,6 +6,7 @@ import JoinGameForm from './join-game/JoinGameForm';
 import GameInterface from './GameInterface';
 
 const graphqlEndpoint = import.meta.env['VITE_GRAPHQL_ENDPOINT_WS'] as string;
+console.log('Using endpoint: ', graphqlEndpoint);
 const subscriptionClient = new SubscriptionClient(graphqlEndpoint, {
   reconnect: true
 });

@@ -5,13 +5,14 @@ namespace DragonAttack
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
             ConfigureOrleans(builder);
             ConfigureServices(builder.Services);
 
             var app = builder.Build();
+            
             app.UseCors(builder =>
             {
                 builder.AllowAnyOrigin()
@@ -21,7 +22,7 @@ namespace DragonAttack
 
             app.UseWebSockets();
             app.MapGraphQL();
-            app.Run();
+            return app.RunAsync("http://0.0.0.0:5000");
         }
 
         private static void ConfigureServices(IServiceCollection services)

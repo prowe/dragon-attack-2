@@ -7,3 +7,6 @@ generates:
       - typescript
       - typescript-operations
       - typed-document-node
+    config:
+      scalars:
+        TimeSpan: "@js-temporal/polyfill#Temporal.Duration" 

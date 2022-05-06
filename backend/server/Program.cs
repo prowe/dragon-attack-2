@@ -106,14 +106,16 @@ namespace DragonAttack
                     Id = Guid.Parse("566c8543-4ba1-4cdf-b921-b811c3a8db52"),
                     Name = "Slash",
                     Dice = new DiceSpecification { Rolls = 1, Sides = 6, Constant = 0},
-                    Effect = AbilityEffect.Damage
+                    Effect = AbilityEffect.Damage,
+                    Cooldown = TimeSpan.FromSeconds(1),
                 },
                 new Ability
                 {
                     Id = Guid.Parse("781c7a2a-21e0-4203-ad6d-045696250ff9"),
                     Name = "Heal",
                     Dice = new DiceSpecification { Rolls = 4, Sides = 8, Constant = 10},
-                    Effect = AbilityEffect.Heal
+                    Effect = AbilityEffect.Heal,
+                    Cooldown = TimeSpan.FromSeconds(30),
                 }
             };
             return abilities.ToDictionary(ab => ab.Id);

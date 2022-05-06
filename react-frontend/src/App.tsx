@@ -4,6 +4,7 @@ import { WebSocketLink } from '@apollo/client/link/ws';
 import { useState } from 'react';
 import JoinGameForm from './join-game/JoinGameForm';
 import GameInterface from './GameInterface';
+import { Temporal } from "@js-temporal/polyfill";
 
 const graphqlEndpoint = import.meta.env['VITE_GRAPHQL_ENDPOINT_WS'] as string;
 console.log('Using endpoint: ', graphqlEndpoint);
@@ -12,7 +13,17 @@ const subscriptionClient = new SubscriptionClient(graphqlEndpoint, {
 });
 
 const apolloClient = new ApolloClient({
-  cache: new InMemoryCache(),
+  cache: new InMemoryCache({
+    typePolicies: {
+      Ability: {
+        fields: {
+          cooldown: {
+            read: (existing) => existing ? Temporal.Duration.from(existing) : existing
+          }
+        }
+      }
+    }
+  }),
   link: new WebSocketLink(subscriptionClient),
 });
 

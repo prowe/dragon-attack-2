@@ -34,7 +34,7 @@ namespace DragonAttack
             return player;
         }
 
-        public async Task<int> UseAbility(Guid playerId, Guid abilityId, Guid targetId)
+        public async Task<int> UseAbility([GlobalState("playerId")] Guid playerId, Guid abilityId, Guid targetId)
         {
             return await clusterClient.GetGrain<IGameCharacterGrain>(playerId).UseAbility(abilityId, targetId);
         }

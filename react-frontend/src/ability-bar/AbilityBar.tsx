@@ -11,7 +11,6 @@ export interface AbilityBarProps {
 }
 
 interface AbilityButtonProps {
-    playerId: string;
     disabled: boolean;
     ability: PlayerAbilityFragment;
 }
@@ -46,7 +45,7 @@ function useCooldownState(cooldown: Temporal.Duration) {
     };
 }
 
-function AbilityButton({playerId, disabled, ability}: AbilityButtonProps) {
+function AbilityButton({disabled, ability}: AbilityButtonProps) {
     const {currentTargetId} = useCurrentTarget();
     const [executeAbility, {loading}] = useMutation(UseAbilityDocument);
     // const {remainingCooldown, startCooldown} = useCooldownState(ability.cooldown);
@@ -58,7 +57,6 @@ function AbilityButton({playerId, disabled, ability}: AbilityButtonProps) {
         console.log('Attacking');
         await executeAbility({
             variables: {
-                playerId,
                 abilityId: ability.id,
                 targetId: currentTargetId
             }
@@ -78,7 +76,7 @@ export default function AbilityBar({player}: AbilityBarProps) {
 
     return (
         <ul className={styles.list}>
-            {player.abilities.map(ability => <li key={ability.id}><AbilityButton ability={ability} playerId={player.id} disabled={isDead} /></li>)}
+            {player.abilities.map(ability => <li key={ability.id}><AbilityButton ability={ability} disabled={isDead} /></li>)}
         </ul>
     )
 }

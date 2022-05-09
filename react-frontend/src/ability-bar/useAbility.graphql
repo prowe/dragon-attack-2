@@ -1,6 +1,5 @@
 mutation UseAbility(
-    $playerId: ID!,
     $abilityId: ID!,
     $targetId: ID!) {
-    useAbility(playerId: $playerId, abilityId: $abilityId, targetId: $targetId)
+    useAbility(abilityId: $abilityId, targetId: $targetId)
 }

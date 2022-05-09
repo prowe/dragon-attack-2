@@ -1,14 +1,15 @@
 using Orleans;
 using Orleans.Streams;
-using Orleans.Core;
 using Orleans.Runtime;
 
 namespace DragonAttack
 {
     public class Area {
         public Guid Id { get; set; }
+
+        [GraphQLType("String!")]
         public string Name { get; set; }
-        public HashSet<Guid> CharactersPresentIds { get; } = new HashSet<Guid>();
+        internal HashSet<Guid> CharactersPresentIds { get; } = new HashSet<Guid>();
 
         public Task<GameCharacter[]> CharactersPresent([Service] IClusterClient clusterClient)
         {
@@ -32,13 +33,13 @@ namespace DragonAttack
 
     public class CharacterEnteredAreaEvent : IAreaEvent
     {
-        public Guid GameCharacterId { get; set; }
+        internal Guid GameCharacterId { get; set; }
         public Task<GameCharacter> GameCharacter([Service] IClusterClient clusterClient)
         {
             return clusterClient.GetGrain<IGameCharacterGrain>(GameCharacterId).GetState();
         }
 
-        public Guid AreaId { get; set; }
+        internal Guid AreaId { get; set; }
         public Task<Area> Area([Service] IClusterClient clusterClient)
         {
             return clusterClient.GetGrain<IAreaGrain>(AreaId).GetState();
@@ -52,7 +53,7 @@ namespace DragonAttack
 
 
     [ImplicitStreamSubscription(nameof(IAreaGrain))]
-    public class AreaGrain : Orleans.Grain, IAreaGrain, IAsyncObserver<IAreaEvent>
+    public class AreaGrain : Orleans.Grain, IAreaGrain
     {
         private readonly ILogger<AreaGrain> logger;
         private readonly IPersistentState<Area> areaState;
@@ -82,7 +83,7 @@ namespace DragonAttack
 
             var streamProvider = base.GetStreamProvider("default");
             var stream = streamProvider.GetStream<IAreaEvent>(this.GetPrimaryKey(), nameof(IAreaGrain));
-            var subscription = await stream.SubscribeAsync(this);
+            var subscription = await stream.SubscribeAsync(OnAreaEvent);
             await base.OnActivateAsync();
         }
 
@@ -94,12 +95,8 @@ namespace DragonAttack
             ISet<Guid> presentSet = present.ToHashSet();
             return Task.FromResult(presentSet);
         }
-
-        public Task OnCompletedAsync() => Task.CompletedTask;
-
-        public Task OnErrorAsync(Exception ex) => Task.CompletedTask;
         
-        public async Task OnNextAsync(IAreaEvent item, StreamSequenceToken token = null)
+        public async Task OnAreaEvent(IAreaEvent item, StreamSequenceToken? token = null)
         {
             logger.LogInformation("Got event: {event}", item);
             switch (item)

@@ -1,15 +1,6 @@
-using System.Collections;
 using Orleans;
-using Orleans.Streaming;
-using System.Linq;
 using Orleans.Streams;
 
-
-/*
-Watch area
-everyone in hate list
-number of targets instead of type
-*/
 namespace DragonAttack
 {
     public interface INPCControllerGrain : IGrainWithGuidKey
@@ -22,9 +13,9 @@ namespace DragonAttack
         private readonly IClusterClient clusterClient;
         private readonly ILogger<NPCControllerGrain> logger;
         private readonly IDictionary<Guid, Ability> abilityMap;
-        private IGameCharacterGrain gameCharacter;
         private Dictionary<Guid, HateListEntry> hateList = new Dictionary<Guid, HateListEntry>();
         private Dictionary<Guid, DateTime> abilitiesOnCooldown = new Dictionary<Guid, DateTime>();
+        private IGameCharacterGrain gameCharacter;
         private StreamSubscriptionHandle<IGameCharacterEvent> gameCharacterStreamHandle;
         private StreamSubscriptionHandle<IAreaEvent> areaStreamHandle;
 
@@ -48,7 +39,7 @@ namespace DragonAttack
 
         private async Task SetupHateList()
         {
-            var currentState = await gameCharacter.GetState();
+            var currentState = await gameCharacter?.GetState();
             var areaId = currentState.LocationAreaId;
             areaStreamHandle = await clusterClient.GetStreamProvider("default")
                 .GetStream<IAreaEvent>(areaId, nameof(IAreaGrain))
@@ -144,8 +135,8 @@ namespace DragonAttack
         {
             var bestNotOnCooldown = currentState.Abilities(abilityMap)
                 .Where(a => !abilitiesOnCooldown.ContainsKey(a.Id))
-                .OrderByDescending(a => a.Dice.Average)
-                .FirstOrDefault();
+                .OrderByDescending(a => a.Dice?.Average)
+                .First();
             return bestNotOnCooldown;
         }
 

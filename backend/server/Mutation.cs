@@ -21,7 +21,6 @@ namespace DragonAttack
             {
                 Id = id,
                 Name = name,
-                IsPlayerCharacter = true,
                 TotalHitPoints = 100,
                 CurrentHitPoints = 100,
                 LocationAreaId = IAreaGrain.StartingArea,

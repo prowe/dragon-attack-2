@@ -7,19 +7,18 @@ namespace DragonAttack
     public class GameCharacter
     {
         public Guid Id { get; set; }
+        [GraphQLType("String!")]
         public string Name { get; set; }
         public int TotalHitPoints { get; set; }
         public int CurrentHitPoints { get; set; }
-        public Guid LocationAreaId { get; set; }
-        internal IEnumerable<Guid> AbilityIds { get; set; } 
+        internal Guid LocationAreaId { get; set; }
+        internal IEnumerable<Guid> AbilityIds { get; set; } = Enumerable.Empty<Guid>();
         public List<Ability> Abilities([Service] IDictionary<Guid, Ability> abilityMap)
         {
             return (AbilityIds ?? Enumerable.Empty<Guid>())
                 .Select(id => abilityMap[id])
                 .ToList();
         }
-
-        public bool IsPlayerCharacter { get; set; } = true;
 
         public Task<Area> Location([Service] IClusterClient clusterClient)
         {
@@ -44,8 +43,8 @@ namespace DragonAttack
 
     public class HealthChangedEvent : IGameCharacterEvent
     {
-        public Guid Source { get; set; }
-        public Guid Target { get; set; }
+        internal Guid Source { get; set; }
+        internal Guid Target { get; set; }
         public int Difference { get; set; }
         public int ResultingHealthPercent { get; set; }
     }

@@ -3,10 +3,11 @@ namespace DragonAttack
     public class Ability
     {
         public Guid Id { get; set; }
+        [GraphQLType("String!")]
         public String Name { get; set; }
-        public DiceSpecification Dice { get; set; }
-        public AbilityEffect Effect { get; set; }
-        public int MaxTargets { get; set; } = 1;
+        internal DiceSpecification Dice { get; set; } = new DiceSpecification();
+        internal AbilityEffect Effect { get; set; }
+        internal int MaxTargets { get; set; } = 1;
         public TimeSpan Cooldown { get; set; } = TimeSpan.Zero;
     }
 
@@ -14,12 +15,6 @@ namespace DragonAttack
     {
         Damage,
         Heal
-    }
-
-    public enum TargetType
-    {
-        Single,
-        Area
     }
 
     public class DiceSpecification

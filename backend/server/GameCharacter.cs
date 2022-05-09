@@ -7,8 +7,7 @@ namespace DragonAttack
     public class GameCharacter
     {
         public Guid Id { get; set; }
-        [GraphQLType("String!")]
-        public string Name { get; set; }
+        public string Name { get; set; } = "Unknown";
         public int TotalHitPoints { get; set; }
         public int CurrentHitPoints { get; set; }
         internal Guid LocationAreaId { get; set; }

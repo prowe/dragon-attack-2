@@ -6,9 +6,7 @@ namespace DragonAttack
 {
     public class Area {
         public Guid Id { get; set; }
-
-        [GraphQLType("String!")]
-        public string Name { get; set; }
+        public string Name { get; set; } = "Unknown";
         internal HashSet<Guid> CharactersPresentIds { get; } = new HashSet<Guid>();
 
         public Task<GameCharacter[]> CharactersPresent([Service] IClusterClient clusterClient)

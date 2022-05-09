@@ -3,8 +3,7 @@ namespace DragonAttack
     public class Ability
     {
         public Guid Id { get; set; }
-        [GraphQLType("String!")]
-        public String Name { get; set; }
+        public String Name { get; set; } = "Unknown";
         internal DiceSpecification Dice { get; set; } = new DiceSpecification();
         internal AbilityEffect Effect { get; set; }
         internal int MaxTargets { get; set; } = 1;

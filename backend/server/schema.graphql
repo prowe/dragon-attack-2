@@ -1,0 +1,62 @@
+scalar TimeSpan
+
+type Query {
+    "Returns the current player"
+    player: GameCharacter!
+}
+
+type GameCharacter {
+    id: ID!
+    name: String!
+    totalHitPoints: Int!
+    currentHitPoints: Int!
+    currentHealthPercent: Int!
+
+    location: Area!
+    abilities: [Ability!]!
+}
+
+interface GameCharacterEvent {
+    target: GameCharacter!
+}
+
+type HealthChangedEvent implements GameCharacterEvent {
+    difference: Int!
+    resultingHealthPercent: Int!
+}
+
+type Ability {
+    id: ID!
+    name: String!
+    cooldown: TimeSpan!
+}
+
+type Area {
+    id: ID!
+    name: String!
+
+    charactersPresent: [GameCharacter!]!
+}
+
+interface AreaEvent {
+    area: Area!
+}
+
+type CharacterEnteredAreaEvent implements CharacterEnteredAreaEvent {
+    gameCharacter: GameCharacter!
+}
+
+type Mutation {
+    joinGame(name: String!): GameCharacter!
+
+    useAbility(
+        playerId: ID!,
+        abilityId: ID!,
+        targetId: ID!): Int!
+}
+
+type Subscription {
+    watchCharacter(id: ID!): GameCharacterEvent!
+
+    watchArea(id: ID!): AreaEvent!
+}

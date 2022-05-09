@@ -16,12 +16,6 @@ namespace DragonAttack
         Heal
     }
 
-    public enum TargetType
-    {
-        Single,
-        Area
-    }
-
     public class DiceSpecification
     {
         public int Sides { get; set; } = 6;

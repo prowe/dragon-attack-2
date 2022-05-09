@@ -76,7 +76,7 @@ namespace DragonAttack
         {
             if (healthChangedEvent.Difference < 0)
             {
-                await RegisterHateForCharacter(healthChangedEvent.Source, healthChangedEvent.Difference * -1);
+                await RegisterHateForCharacter(healthChangedEvent.SourceId, healthChangedEvent.Difference * -1);
             }
         }
 
@@ -97,7 +97,7 @@ namespace DragonAttack
         {
             if (characterEvent is HealthChangedEvent healthChanged)
             {
-                var targetId = healthChanged.Target;
+                var targetId = healthChanged.TargetId;
                 if(healthChanged.ResultingHealthPercent == 0
                     && hateList.TryGetValue(targetId, out var entry))
                 {

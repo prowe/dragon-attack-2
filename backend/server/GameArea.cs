@@ -25,9 +25,9 @@ namespace DragonAttack
         public Task<ISet<Guid>> GetPresentCharacterIds();
     }
 
-    [UnionType("AreaEvent")]
     public interface IAreaEvent
     {
+        public Guid AreaId { get; set; }
     }
 
     public class CharacterEnteredAreaEvent : IAreaEvent

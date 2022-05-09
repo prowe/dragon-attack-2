@@ -19,8 +19,6 @@ namespace DragonAttack
                 .ToList();
         }
 
-        public bool IsPlayerCharacter { get; set; } = true;
-
         public Task<Area> Location([Service] IClusterClient clusterClient)
         {
             return clusterClient.GetGrain<IAreaGrain>(LocationAreaId).GetState();
@@ -37,15 +35,20 @@ namespace DragonAttack
     public class AlreadySpawnedException : Exception
     {}
 
-    [UnionType("GameCharacterEvent")]
     public interface IGameCharacterEvent
     {
+        public Guid TargetId { get; set; }
     }
 
     public class HealthChangedEvent : IGameCharacterEvent
     {
-        public Guid Source { get; set; }
-        public Guid Target { get; set; }
+        public Guid SourceId { get; set; }
+        public Guid TargetId { get; set; }
+        public Task<GameCharacter> Target([Service] IClusterClient clusterClient)
+        {
+            return clusterClient.GetGrain<IGameCharacterGrain>(TargetId).GetState();
+        }
+
         public int Difference { get; set; }
         public int ResultingHealthPercent { get; set; }
     }
@@ -133,8 +136,8 @@ namespace DragonAttack
 
             var healthChangedEvent = new HealthChangedEvent
             {
-                Source = sourceCharacterId,
-                Target = this.GetPrimaryKey(),
+                SourceId = sourceCharacterId,
+                TargetId = this.GetPrimaryKey(),
                 Difference = actualDelta,
                 ResultingHealthPercent = gameCharacterState.State.CurrentHealthPercent
             };

@@ -96,7 +96,7 @@ namespace DragonAttack
             return Task.FromResult(presentSet);
         }
         
-        public async Task OnAreaEvent(IAreaEvent item, StreamSequenceToken? token = null)
+        public async Task OnAreaEvent(IAreaEvent item, StreamSequenceToken token = null)
         {
             logger.LogInformation("Got event: {event}", item);
             switch (item)

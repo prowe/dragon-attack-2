@@ -10,7 +10,7 @@ namespace DragonAttack
         private readonly Channel<T> channel;
         private readonly IAsyncStream<T> orleansStream;
         private readonly InMemorySourceStream<T> channelWrapper;
-        private StreamSubscriptionHandle<T> subscriptionHandle;
+        private StreamSubscriptionHandle<T>? subscriptionHandle;
 
         public OrleansStreamSourceStream(IAsyncStream<T> stream)
         {

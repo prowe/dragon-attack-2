@@ -15,9 +15,10 @@ namespace DragonAttack
         private readonly IDictionary<Guid, Ability> abilityMap;
         private Dictionary<Guid, HateListEntry> hateList = new Dictionary<Guid, HateListEntry>();
         private Dictionary<Guid, DateTime> abilitiesOnCooldown = new Dictionary<Guid, DateTime>();
-        private IGameCharacterGrain gameCharacter;
-        private StreamSubscriptionHandle<IGameCharacterEvent> gameCharacterStreamHandle;
-        private StreamSubscriptionHandle<IAreaEvent> areaStreamHandle;
+        private IGameCharacterGrain? gameCharacter;
+        private IGameCharacterGrain GameCharacterGrain => gameCharacter ?? throw new NullReferenceException();
+        private StreamSubscriptionHandle<IGameCharacterEvent>? gameCharacterStreamHandle;
+        private StreamSubscriptionHandle<IAreaEvent>? areaStreamHandle;
 
         public NPCControllerGrain(
             IClusterClient clusterClient, 
@@ -39,7 +40,7 @@ namespace DragonAttack
 
         private async Task SetupHateList()
         {
-            var currentState = await gameCharacter?.GetState();
+            var currentState = await GameCharacterGrain.GetState();
             var areaId = currentState.LocationAreaId;
             areaStreamHandle = await clusterClient.GetStreamProvider("default")
                 .GetStream<IAreaEvent>(areaId, nameof(IAreaGrain))
@@ -50,7 +51,7 @@ namespace DragonAttack
                 });
             var areaCharacterIds = await clusterClient.GetGrain<IAreaGrain>(areaId).GetPresentCharacterIds();
             await Task.WhenAll(areaCharacterIds
-                .Where(id => id != gameCharacter.GetPrimaryKey())
+                .Where(id => id != GameCharacterGrain.GetPrimaryKey())
                 .Select(id => RegisterHateForCharacter(id, 0))
             );
         }
@@ -103,13 +104,13 @@ namespace DragonAttack
         {
             logger.LogInformation("Taking a turn {id}", this.GetPrimaryKey());
             CleanupCooldowns();
-            var currentState = await gameCharacter.GetState();
+            var currentState = await GameCharacterGrain.GetState();
             var ability = ChooseAbility(currentState);
             var targets = ChooseTargets(ability);
             if(targets.Any())
             {
                 logger.LogInformation("Using ability {abilityid} ({abilityName}) on {targetIds}", ability.Id, ability.Name, targets);
-                await gameCharacter.UseAbility(ability.Id, targets);
+                await GameCharacterGrain.UseAbility(ability.Id, targets);
                 RegisterCooldown(ability);
             }
         }

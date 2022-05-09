@@ -35,15 +35,17 @@ namespace DragonAttack
 
             services.AddGraphQLServer()
                 .AddDocumentFromFile("schema.graphql")
+                .ModifyOptions(options =>
+                {
+                    options.DefaultBindingBehavior = BindingBehavior.Explicit;
+                })
                 .BindRuntimeType<Guid, IdType>()
                 .AddSocketSessionInterceptor<CurrentPlayerInterceptor>()
                 .BindRuntimeType<Query>()
                 .BindRuntimeType<Mutation>()
                 .BindRuntimeType<Subscription>()
-                .BindRuntimeType<IGameCharacterEvent>("GameCharacterEvent")
-                .BindRuntimeType<HealthChangedEvent>()
-                .BindRuntimeType<IAreaEvent>("AreaEvent")
-                .BindRuntimeType<CharacterEnteredAreaEvent>();
+                .BindRuntimeType<HealthChangedEvent>();
+                // .BindRuntimeType<CharacterEnteredAreaEvent>();
 
             services.AddSingleton<IDictionary<Guid, Ability>>(BuildAbilityMap);
             services.AddHostedService<DragonSpawner>();

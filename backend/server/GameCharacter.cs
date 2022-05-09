@@ -35,15 +35,18 @@ namespace DragonAttack
     public class AlreadySpawnedException : Exception
     {}
 
+    [GraphQLName("GameCharacterEvent")]
     public interface IGameCharacterEvent
     {
         public Guid TargetId { get; set; }
+        public Task<GameCharacter> Target([Service] IClusterClient clusterClient);
     }
 
     public class HealthChangedEvent : IGameCharacterEvent
     {
         public Guid SourceId { get; set; }
         public Guid TargetId { get; set; }
+
         public Task<GameCharacter> Target([Service] IClusterClient clusterClient)
         {
             return clusterClient.GetGrain<IGameCharacterGrain>(TargetId).GetState();

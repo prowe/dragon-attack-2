@@ -37,7 +37,7 @@ namespace DragonAttack
 
     public interface IGameCharacterEvent
     {
-        public Guid TargetId { get; set; }
+        public string Message { get; }
 
         // public Task<GameCharacter> Target([Service] IClusterClient clusterClient);
     }
@@ -45,15 +45,14 @@ namespace DragonAttack
     public class HealthChangedEvent : IGameCharacterEvent
     {
         internal Guid SourceId { get; set; }
-        public Guid TargetId { get; set; }
-
+        internal Guid TargetId { get; set; }
+        public int Difference { get; set; }
+        public int ResultingHealthPercent { get; set; }
+        public string Message => Difference < 0 ? $"{-Difference} damage taken" : $"{Difference} points healed";
         public Task<GameCharacter> Target([Service] IClusterClient clusterClient)
         {
             return clusterClient.GetGrain<IGameCharacterGrain>(TargetId).GetState();
         }
-
-        public int Difference { get; set; }
-        public int ResultingHealthPercent { get; set; }
     }
 
     public interface IGameCharacterGrain : IGrainWithGuidKey

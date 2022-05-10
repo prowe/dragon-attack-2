@@ -19,13 +19,14 @@ type GameCharacter {
 }
 
 interface GameCharacterEvent {
+    message: String!
     target: GameCharacter!
-    targetId: ID!
 }
 
 type HealthChangedEvent {
-    targetId: ID!
+    message: String!
     target: GameCharacter!
+
     difference: Int!
     resultingHealthPercent: Int!
 }

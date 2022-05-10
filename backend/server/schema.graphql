@@ -19,7 +19,7 @@ type GameCharacter {
 }
 
 interface GameCharacterEvent {
-    # target: GameCharacter!
+    target: GameCharacter!
     targetId: ID!
 }
 

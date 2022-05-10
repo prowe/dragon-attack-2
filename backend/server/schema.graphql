@@ -25,7 +25,7 @@ interface GameCharacterEvent {
 
 type HealthChangedEvent {
     targetId: ID!
-    # target: GameCharacter!
+    target: GameCharacter!
     difference: Int!
     resultingHealthPercent: Int!
 }

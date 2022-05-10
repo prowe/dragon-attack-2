@@ -13,11 +13,6 @@ namespace DragonAttack
             this.clusterClient = clusterClient;
         }
 
-        public int Counter()
-        {
-            return 0;
-        }
-
         public Task<GameCharacter> Player(Guid id, [GlobalState("playerId")] Guid playerId)
         {
             logger.LogInformation("Got playerid to the other side {playerId}", playerId);

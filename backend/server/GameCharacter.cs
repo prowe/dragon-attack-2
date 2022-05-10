@@ -35,17 +35,23 @@ namespace DragonAttack
     public class AlreadySpawnedException : Exception
     {}
 
-    [UnionType("GameCharacterEvent")]
     public interface IGameCharacterEvent
     {
+        public string Name { get; }
     }
 
     public class HealthChangedEvent : IGameCharacterEvent
     {
-        internal Guid Source { get; set; }
-        internal Guid Target { get; set; }
+        internal Guid SourceId { get; set; }
+        internal Guid TargetId { get; set; }
         public int Difference { get; set; }
         public int ResultingHealthPercent { get; set; }
+        public string Name => Difference < 0 ? "Damage Taken" : $"Healed";
+
+        public Task<GameCharacter> Target([Service] IClusterClient clusterClient)
+        {
+            return clusterClient.GetGrain<IGameCharacterGrain>(TargetId).GetState();
+        }
     }
 
     public interface IGameCharacterGrain : IGrainWithGuidKey
@@ -131,8 +137,8 @@ namespace DragonAttack
 
             var healthChangedEvent = new HealthChangedEvent
             {
-                Source = sourceCharacterId,
-                Target = this.GetPrimaryKey(),
+                SourceId = sourceCharacterId,
+                TargetId = this.GetPrimaryKey(),
                 Difference = actualDelta,
                 ResultingHealthPercent = gameCharacterState.State.CurrentHealthPercent
             };

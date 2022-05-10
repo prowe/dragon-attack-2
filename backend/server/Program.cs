@@ -3,6 +3,21 @@ using Orleans.Hosting;
 
 namespace DragonAttack
 {
+    public interface IMessage
+{
+    public Task<DateTime> CreatedAt();
+}
+
+public class TextMessage : IMessage
+{
+    public Task<DateTime> CreatedAt()
+    {
+        return Task.FromResult(DateTime.Now);
+    }
+
+    public string Content { get; set; }
+}
+
     public class Program
     {
         public static Task Main(string[] args)
@@ -31,16 +46,22 @@ namespace DragonAttack
             services.AddSingleton<Mutation>();
             services.AddSingleton<Query>();
             services.AddSingleton<Subscription>();
-            services.AddHttpContextAccessor();
+            services.AddSingleton<LoggingErrorFilter>();
 
-            services.AddGraphQLServer()
-                .BindRuntimeType<Guid, IdType>()
+            services
+                .AddGraphQLServer()
+                .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = true)
+                .AddErrorFilter<LoggingErrorFilter>()
+                .AddDocumentFromFile("schema.graphql")
                 .AddSocketSessionInterceptor<CurrentPlayerInterceptor>()
-                .AddQueryType<Query>()
-                .AddMutationType<Mutation>()
-                .AddSubscriptionType<Subscription>()
-                .AddType<HealthChangedEvent>()
-                .AddType<CharacterEnteredAreaEvent>();
+                .BindRuntimeType<Guid, IdType>()
+                .BindRuntimeType<Query>()
+                .BindRuntimeType<Subscription>()
+                .BindRuntimeType<Mutation>()
+                .BindRuntimeType<GameCharacter>()
+                .BindRuntimeType<HealthChangedEvent>()
+                .BindRuntimeType<CharacterEnteredAreaEvent>()
+            ;
 
             services.AddSingleton<IDictionary<Guid, Ability>>(BuildAbilityMap);
             services.AddHostedService<DragonSpawner>();

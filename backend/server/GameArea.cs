@@ -24,20 +24,23 @@ namespace DragonAttack
         public Task<ISet<Guid>> GetPresentCharacterIds();
     }
 
-    [UnionType("AreaEvent")]
     public interface IAreaEvent
     {
+        internal Guid AreaId { get; set; }
+        public string Name { get; }
     }
 
     public class CharacterEnteredAreaEvent : IAreaEvent
     {
+        public string Name { get; } = "Character Entered Area";
+        public Guid AreaId { get; set; }
         internal Guid GameCharacterId { get; set; }
+
         public Task<GameCharacter> GameCharacter([Service] IClusterClient clusterClient)
         {
             return clusterClient.GetGrain<IGameCharacterGrain>(GameCharacterId).GetState();
         }
 
-        internal Guid AreaId { get; set; }
         public Task<Area> Area([Service] IClusterClient clusterClient)
         {
             return clusterClient.GetGrain<IAreaGrain>(AreaId).GetState();

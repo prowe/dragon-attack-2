@@ -3,6 +3,21 @@ using Orleans.Hosting;
 
 namespace DragonAttack
 {
+    public interface IMessage
+{
+    public Task<DateTime> CreatedAt();
+}
+
+public class TextMessage : IMessage
+{
+    public Task<DateTime> CreatedAt()
+    {
+        return Task.FromResult(DateTime.Now);
+    }
+
+    public string Content { get; set; }
+}
+
     public class Program
     {
         public static Task Main(string[] args)
@@ -33,19 +48,49 @@ namespace DragonAttack
             services.AddSingleton<Subscription>();
             services.AddHttpContextAccessor();
 
-            services.AddGraphQLServer()
+            services
+                .AddGraphQLServer()
                 .AddDocumentFromFile("schema.graphql")
-                .ModifyOptions(options =>
+                .OnSchemaError((descriptorContext, error) =>
                 {
-                    options.DefaultBindingBehavior = BindingBehavior.Explicit;
+                    Console.Error.WriteLine("err: " + descriptorContext.ToString() + error.ToString());
+                    if (error is SchemaException schemaError)
+                    {
+                        Console.Error.WriteLine("err: " + string.Join('\n', schemaError.Errors));
+                    }
                 })
                 .BindRuntimeType<Guid, IdType>()
-                .AddSocketSessionInterceptor<CurrentPlayerInterceptor>()
                 .BindRuntimeType<Query>()
-                .BindRuntimeType<Mutation>()
                 .BindRuntimeType<Subscription>()
-                .BindRuntimeType<HealthChangedEvent>();
+                .BindRuntimeType<HealthChangedEvent>()
+            ;
+                
+            // .BindRuntimeType<TextMessage>()
+            // .AddResolver("Query", "messages", (context) =>
+            // {
+            //     return new List<IMessage>
+            //     {
+            //         new TextMessage
+            //         {
+            //             Content = "Hello World"
+            //         }
+            //     };
+            // });
+
+            // services.AddGraphQLServer()
+            //     .AddDocumentFromFile("schema.graphql")
+            //     .ModifyOptions(options =>
+            //     {
+            //         options.DefaultBindingBehavior = BindingBehavior.Explicit;
+            //     })
+            //     .BindRuntimeType<Guid, IdType>()
+            //     .AddSocketSessionInterceptor<CurrentPlayerInterceptor>()
+            //     .BindRuntimeType<Mutation>()
+            //     .BindRuntimeType<Subscription>()
+            //     .BindRuntimeType<HealthChangedEvent>();
                 // .BindRuntimeType<CharacterEnteredAreaEvent>();
+
+            
 
             services.AddSingleton<IDictionary<Guid, Ability>>(BuildAbilityMap);
             services.AddHostedService<DragonSpawner>();

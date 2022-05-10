@@ -12,14 +12,14 @@ namespace DragonAttack
         public int CurrentHitPoints { get; set; }
         public Guid LocationAreaId { get; set; }
         internal IEnumerable<Guid> AbilityIds { get; set; } 
-        public List<Ability> Abilities([Service] IDictionary<Guid, Ability> abilityMap)
+        internal List<Ability> Abilities([Service] IDictionary<Guid, Ability> abilityMap)
         {
             return (AbilityIds ?? Enumerable.Empty<Guid>())
                 .Select(id => abilityMap[id])
                 .ToList();
         }
 
-        public Task<Area> Location([Service] IClusterClient clusterClient)
+        internal Task<Area> Location([Service] IClusterClient clusterClient)
         {
             return clusterClient.GetGrain<IAreaGrain>(LocationAreaId).GetState();
         }  
@@ -35,16 +35,16 @@ namespace DragonAttack
     public class AlreadySpawnedException : Exception
     {}
 
-    [GraphQLName("GameCharacterEvent")]
     public interface IGameCharacterEvent
     {
         public Guid TargetId { get; set; }
-        public Task<GameCharacter> Target([Service] IClusterClient clusterClient);
+
+        // public Task<GameCharacter> Target([Service] IClusterClient clusterClient);
     }
 
     public class HealthChangedEvent : IGameCharacterEvent
     {
-        public Guid SourceId { get; set; }
+        internal Guid SourceId { get; set; }
         public Guid TargetId { get; set; }
 
         public Task<GameCharacter> Target([Service] IClusterClient clusterClient)

@@ -10,16 +10,17 @@ namespace DragonAttack
         public string Name { get; set; }
         public int TotalHitPoints { get; set; }
         public int CurrentHitPoints { get; set; }
-        public Guid LocationAreaId { get; set; }
+        internal Guid LocationAreaId { get; set; }
         internal IEnumerable<Guid> AbilityIds { get; set; } 
-        internal List<Ability> Abilities([Service] IDictionary<Guid, Ability> abilityMap)
+
+        public List<Ability> Abilities([Service] IDictionary<Guid, Ability> abilityMap)
         {
             return (AbilityIds ?? Enumerable.Empty<Guid>())
                 .Select(id => abilityMap[id])
                 .ToList();
         }
 
-        internal Task<Area> Location([Service] IClusterClient clusterClient)
+        public Task<Area> Location([Service] IClusterClient clusterClient)
         {
             return clusterClient.GetGrain<IAreaGrain>(LocationAreaId).GetState();
         }  
@@ -37,9 +38,7 @@ namespace DragonAttack
 
     public interface IGameCharacterEvent
     {
-        public string Message { get; }
-
-        // public Task<GameCharacter> Target([Service] IClusterClient clusterClient);
+        public string Name { get; }
     }
 
     public class HealthChangedEvent : IGameCharacterEvent
@@ -48,7 +47,8 @@ namespace DragonAttack
         internal Guid TargetId { get; set; }
         public int Difference { get; set; }
         public int ResultingHealthPercent { get; set; }
-        public string Message => Difference < 0 ? $"{-Difference} damage taken" : $"{Difference} points healed";
+        public string Name => Difference < 0 ? "Damage Taken" : $"Healed";
+
         public Task<GameCharacter> Target([Service] IClusterClient clusterClient)
         {
             return clusterClient.GetGrain<IGameCharacterGrain>(TargetId).GetState();

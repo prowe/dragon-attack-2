@@ -51,17 +51,10 @@ public class TextMessage : IMessage
             services
                 .AddGraphQLServer()
                 .AddDocumentFromFile("schema.graphql")
-                .OnSchemaError((descriptorContext, error) =>
-                {
-                    Console.Error.WriteLine("err: " + descriptorContext.ToString() + error.ToString());
-                    if (error is SchemaException schemaError)
-                    {
-                        Console.Error.WriteLine("err: " + string.Join('\n', schemaError.Errors));
-                    }
-                })
                 .BindRuntimeType<Guid, IdType>()
                 .BindRuntimeType<Query>()
                 .BindRuntimeType<Subscription>()
+                .BindRuntimeType<Mutation>()
                 .BindRuntimeType<GameCharacter>()
                 .BindRuntimeType<HealthChangedEvent>()
             ;

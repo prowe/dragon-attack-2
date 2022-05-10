@@ -13,15 +13,10 @@ namespace DragonAttack
             this.clusterClient = clusterClient;
         }
 
-        public int Counter()
+        public Task<GameCharacter> Player(Guid id, [GlobalState("playerId")] Guid playerId)
         {
-            return 0;
+            logger.LogInformation("Got playerid to the other side {playerId}", playerId);
+            return clusterClient.GetGrain<IGameCharacterGrain>(id).GetState();
         }
-
-        // public Task<GameCharacter> Player(Guid id, [GlobalState("playerId")] Guid playerId)
-        // {
-        //     logger.LogInformation("Got playerid to the other side {playerId}", playerId);
-        //     return clusterClient.GetGrain<IGameCharacterGrain>(id).GetState();
-        // }
     }
 }

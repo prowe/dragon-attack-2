@@ -2,9 +2,7 @@ scalar TimeSpan
 
 type Query {
     "Returns the current player"
-    # player: GameCharacter!
-
-    counter: Int!
+    player: GameCharacter!
 }
 
 type GameCharacter {
@@ -14,35 +12,35 @@ type GameCharacter {
    currentHitPoints: Int!
    currentHealthPercent: Int!
 
-   # location: Area!
-   # abilities: [Ability!]!
+   location: Area!
+   abilities: [Ability!]!
 }
 
 interface GameCharacterEvent {
-    message: String!
+    name: String!
     target: GameCharacter!
 }
 
 type HealthChangedEvent {
-    message: String!
+    name: String!
     target: GameCharacter!
 
     difference: Int!
     resultingHealthPercent: Int!
 }
 
-# type Ability {
-#     id: ID!
-#     name: String!
-#     cooldown: TimeSpan!
-# }
-# 
-# type Area {
-#     id: ID!
-#     name: String!
-# 
-#     charactersPresent: [GameCharacter!]!
-# }
+type Ability {
+    id: ID!
+    name: String!
+    cooldown: TimeSpan!
+}
+
+type Area {
+    id: ID!
+    name: String!
+
+    charactersPresent: [GameCharacter!]!
+}
 
 # interface AreaEvent {
 #     area: Area!
@@ -52,14 +50,14 @@ type HealthChangedEvent {
 #     gameCharacter: GameCharacter!
 # }
 
-# type Mutation {
-#     joinGame(name: String!): GameCharacter!
-# 
-#     useAbility(
-#         playerId: ID!,
-#         abilityId: ID!,
-#         targetId: ID!): Int!
-# }
+type Mutation {
+    joinGame(name: String!): GameCharacter!
+
+    useAbility(
+        playerId: ID!,
+        abilityId: ID!,
+        targetId: ID!): Int!
+}
 
 type Subscription {
     watchCharacter(id: ID!): GameCharacterEvent!

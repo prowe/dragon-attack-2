@@ -46,45 +46,22 @@ public class TextMessage : IMessage
             services.AddSingleton<Mutation>();
             services.AddSingleton<Query>();
             services.AddSingleton<Subscription>();
-            services.AddHttpContextAccessor();
+            services.AddSingleton<LoggingErrorFilter>();
 
             services
                 .AddGraphQLServer()
+                .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = true)
+                .AddErrorFilter<LoggingErrorFilter>()
                 .AddDocumentFromFile("schema.graphql")
+                .AddSocketSessionInterceptor<CurrentPlayerInterceptor>()
                 .BindRuntimeType<Guid, IdType>()
                 .BindRuntimeType<Query>()
                 .BindRuntimeType<Subscription>()
                 .BindRuntimeType<Mutation>()
                 .BindRuntimeType<GameCharacter>()
                 .BindRuntimeType<HealthChangedEvent>()
+                .BindRuntimeType<CharacterEnteredAreaEvent>()
             ;
-                
-            // .BindRuntimeType<TextMessage>()
-            // .AddResolver("Query", "messages", (context) =>
-            // {
-            //     return new List<IMessage>
-            //     {
-            //         new TextMessage
-            //         {
-            //             Content = "Hello World"
-            //         }
-            //     };
-            // });
-
-            // services.AddGraphQLServer()
-            //     .AddDocumentFromFile("schema.graphql")
-            //     .ModifyOptions(options =>
-            //     {
-            //         options.DefaultBindingBehavior = BindingBehavior.Explicit;
-            //     })
-            //     .BindRuntimeType<Guid, IdType>()
-            //     .AddSocketSessionInterceptor<CurrentPlayerInterceptor>()
-            //     .BindRuntimeType<Mutation>()
-            //     .BindRuntimeType<Subscription>()
-            //     .BindRuntimeType<HealthChangedEvent>();
-                // .BindRuntimeType<CharacterEnteredAreaEvent>();
-
-            
 
             services.AddSingleton<IDictionary<Guid, Ability>>(BuildAbilityMap);
             services.AddHostedService<DragonSpawner>();

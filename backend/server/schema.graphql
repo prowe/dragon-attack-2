@@ -2,7 +2,7 @@ scalar TimeSpan
 
 type Query {
     "Returns the current player"
-    player: GameCharacter!
+    player(id: ID!): GameCharacter!
 }
 
 type GameCharacter {
@@ -42,13 +42,17 @@ type Area {
     charactersPresent: [GameCharacter!]!
 }
 
-# interface AreaEvent {
-#     area: Area!
-# }
-# 
-# type CharacterEnteredAreaEvent implements CharacterEnteredAreaEvent {
-#     gameCharacter: GameCharacter!
-# }
+interface AreaEvent {
+    name: String!
+    area: Area!
+}
+
+type CharacterEnteredAreaEvent implements AreaEvent {
+    name: String!
+    area: Area!
+
+    gameCharacter: GameCharacter!
+}
 
 type Mutation {
     joinGame(name: String!): GameCharacter!
@@ -62,5 +66,5 @@ type Mutation {
 type Subscription {
     watchCharacter(id: ID!): GameCharacterEvent!
 
-   # watchArea(id: ID!): AreaEvent!
+    watchArea(id: ID!): AreaEvent!
 }

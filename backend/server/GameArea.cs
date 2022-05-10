@@ -8,7 +8,7 @@ namespace DragonAttack
     public class Area {
         public Guid Id { get; set; }
         public string Name { get; set; }
-        public HashSet<Guid> CharactersPresentIds { get; } = new HashSet<Guid>();
+        internal HashSet<Guid> CharactersPresentIds { get; } = new HashSet<Guid>();
 
         public Task<GameCharacter[]> CharactersPresent([Service] IClusterClient clusterClient)
         {
@@ -27,18 +27,21 @@ namespace DragonAttack
 
     public interface IAreaEvent
     {
-        public Guid AreaId { get; set; }
+        internal Guid AreaId { get; set; }
+        public string Name { get; }
     }
 
     public class CharacterEnteredAreaEvent : IAreaEvent
     {
-        public Guid GameCharacterId { get; set; }
+        public string Name { get; } = "Character Entered Area";
+        public Guid AreaId { get; set; }
+        internal Guid GameCharacterId { get; set; }
+
         public Task<GameCharacter> GameCharacter([Service] IClusterClient clusterClient)
         {
             return clusterClient.GetGrain<IGameCharacterGrain>(GameCharacterId).GetState();
         }
 
-        public Guid AreaId { get; set; }
         public Task<Area> Area([Service] IClusterClient clusterClient)
         {
             return clusterClient.GetGrain<IAreaGrain>(AreaId).GetState();

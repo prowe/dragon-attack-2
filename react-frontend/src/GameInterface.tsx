@@ -43,11 +43,7 @@ function useWatchArea (area?: GetCurrentPlayerQuery['player']['location']) {
 }
 
 export default function GameInterface({playerId}: GameInterfaceProps) {
-    const {data, loading, error} = useQuery(GetCurrentPlayerDocument, {
-        variables: {
-            playerId
-        },
-    });
+    const {data, loading, error} = useQuery(GetCurrentPlayerDocument);
     const player = data?.player;
     useWatchArea(player?.location);
     if (loading || !player) {

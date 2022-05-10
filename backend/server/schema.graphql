@@ -2,7 +2,7 @@ scalar TimeSpan
 
 type Query {
     "Returns the current player"
-    player(id: ID!): GameCharacter!
+    player: GameCharacter!
 }
 
 type GameCharacter {
@@ -57,10 +57,7 @@ type CharacterEnteredAreaEvent implements AreaEvent {
 type Mutation {
     joinGame(name: String!): GameCharacter!
 
-    useAbility(
-        playerId: ID!,
-        abilityId: ID!,
-        targetId: ID!): Int!
+    useAbility(abilityId: ID!, targetId: ID!): Int!
 }
 
 type Subscription {

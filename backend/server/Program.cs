@@ -3,21 +3,6 @@ using Orleans.Hosting;
 
 namespace DragonAttack
 {
-    public interface IMessage
-{
-    public Task<DateTime> CreatedAt();
-}
-
-public class TextMessage : IMessage
-{
-    public Task<DateTime> CreatedAt()
-    {
-        return Task.FromResult(DateTime.Now);
-    }
-
-    public string Content { get; set; }
-}
-
     public class Program
     {
         public static Task Main(string[] args)
@@ -46,12 +31,10 @@ public class TextMessage : IMessage
             services.AddSingleton<Mutation>();
             services.AddSingleton<Query>();
             services.AddSingleton<Subscription>();
-            services.AddSingleton<LoggingErrorFilter>();
 
             services
                 .AddGraphQLServer()
                 .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = true)
-                .AddErrorFilter<LoggingErrorFilter>()
                 .AddDocumentFromFile("schema.graphql")
                 .AddSocketSessionInterceptor<CurrentPlayerInterceptor>()
                 .BindRuntimeType<Guid, IdType>()

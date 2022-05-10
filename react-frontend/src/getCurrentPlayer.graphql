@@ -1,5 +1,5 @@
-query GetCurrentPlayer($playerId: ID!) {
-    player(id: $playerId) {
+query GetCurrentPlayer {
+    player {
         __typename
         id
         name

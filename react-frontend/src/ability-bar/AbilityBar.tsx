@@ -15,42 +15,25 @@ interface AbilityButtonProps {
     ability: PlayerAbilityFragment;
 }
 
-function useCooldownState(cooldown: Temporal.Duration) {
-    const [expiration, setExpiration] = useState<Temporal.Instant | null>(null);
-    const [remainingCooldown, setRemainingCooldown] = useState<Temporal.Duration | null>(null);
-    const updateRemainingCooldown = useCallback(() => {
-        const remaining = expiration && Temporal.Now.instant().until(expiration);
-        setRemainingCooldown(remaining?.sign === 1 ? remaining : null);
-    }, [expiration]);
-
-    useEffect(() => {
-        if (!expiration) {
-            return;
-        }
-        const handle = setInterval(updateRemainingCooldown, 1000);
-        return () => clearInterval(handle);
-    }, [expiration, setRemainingCooldown])
-
-    const startCooldown = () => {
-        if (cooldown.total("milliseconds") < 1)
-        {
-            return;
-        }
-        setExpiration(Temporal.Now.instant().add(cooldown));
-        updateRemainingCooldown();
-    };
-    return {
-        remainingCooldown,
-        startCooldown
-    };
-}
-
 function AbilityButton({disabled, ability}: AbilityButtonProps) {
     const {currentTargetId} = useCurrentTarget();
     const [executeAbility, {loading}] = useMutation(UseAbilityDocument);
-    // const {remainingCooldown, startCooldown} = useCooldownState(ability.cooldown);
+    const [remainingCooldown, setRemainingCooldown] = useState<Temporal.Duration | null>(null);
+    const [cooldownExpiration, setCooldownExpiration] = useState<Temporal.Instant | null>(null);
 
-    async function onAttack() {
+    useEffect(() => {
+        if (!cooldownExpiration) {
+            return;
+        }
+        function updateRemainingCooldown(expiration: Temporal.Instant) {
+            const remaining = Temporal.Now.instant().until(expiration);
+            setRemainingCooldown(remaining.sign > 0 ? remaining : null);
+        }
+        const handle = setInterval(updateRemainingCooldown, 1000, cooldownExpiration);
+        return () => clearInterval(handle);
+    }, [cooldownExpiration, setRemainingCooldown])
+
+    async function onUseAbility() {
         if (!currentTargetId) {
             throw new Error();
         }
@@ -61,12 +44,13 @@ function AbilityButton({disabled, ability}: AbilityButtonProps) {
                 targetId: currentTargetId
             }
         });
-        // startCooldown();
+        setRemainingCooldown(ability.cooldown);
+        setCooldownExpiration(Temporal.Now.instant().add(ability.cooldown));
     }
     return (
-        <button onClick={onAttack} disabled={!currentTargetId || disabled || loading}>
+        <button onClick={onUseAbility} disabled={!currentTargetId || disabled || loading || Boolean(remainingCooldown)}>
             {ability.name}
-            {/* {remainingCooldown && ` ${remainingCooldown.total('seconds').toFixed(0)}`} */}
+            {remainingCooldown && ` ${remainingCooldown.total('seconds').toFixed(0)}`}
         </button>
     );
 }

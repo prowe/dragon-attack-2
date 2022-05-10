@@ -119,7 +119,7 @@ namespace DragonAttack
                     Name = "Heal",
                     Dice = new DiceSpecification { Rolls = 4, Sides = 8, Constant = 10},
                     Effect = AbilityEffect.Heal,
-                    Cooldown = TimeSpan.FromSeconds(30),
+                    Cooldown = TimeSpan.FromSeconds(15),
                 }
             };
             return abilities.ToDictionary(ab => ab.Id);

@@ -62,6 +62,7 @@ public class TextMessage : IMessage
                 .BindRuntimeType<Guid, IdType>()
                 .BindRuntimeType<Query>()
                 .BindRuntimeType<Subscription>()
+                .BindRuntimeType<GameCharacter>()
                 .BindRuntimeType<HealthChangedEvent>()
             ;
                 

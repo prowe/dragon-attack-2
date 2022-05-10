@@ -7,16 +7,16 @@ type Query {
     counter: Int!
 }
 
-# type GameCharacter {
-#    id: ID!
-#    name: String!
-#    totalHitPoints: Int!
-#    currentHitPoints: Int!
-#    currentHealthPercent: Int!
-# 
-#     location: Area!
-#     abilities: [Ability!]!
-# }
+type GameCharacter {
+   id: ID!
+   name: String!
+   totalHitPoints: Int!
+   currentHitPoints: Int!
+   currentHealthPercent: Int!
+
+   # location: Area!
+   # abilities: [Ability!]!
+}
 
 interface GameCharacterEvent {
     # target: GameCharacter!

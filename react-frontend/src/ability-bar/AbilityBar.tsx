@@ -4,7 +4,7 @@ import { UseAbilityDocument } from "../generated/graphql";
 import useCurrentTarget from "../CurrentTargetContext";
 import styles from './AbilityBar.module.css';
 import { Temporal } from "@js-temporal/polyfill";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 export interface AbilityBarProps {
     player: GetCurrentPlayerQuery['player'];
@@ -48,7 +48,7 @@ function AbilityButton({disabled, ability}: AbilityButtonProps) {
         setCooldownExpiration(Temporal.Now.instant().add(ability.cooldown));
     }
     return (
-        <button onClick={onUseAbility} disabled={!currentTargetId || disabled || loading || Boolean(remainingCooldown)}>
+        <button className={styles.abilityButton} onClick={onUseAbility} disabled={!currentTargetId || disabled || loading || Boolean(remainingCooldown)}>
             {ability.name}
             {remainingCooldown && ` ${remainingCooldown.total('seconds').toFixed(0)}`}
         </button>
@@ -59,8 +59,8 @@ export default function AbilityBar({player}: AbilityBarProps) {
     const isDead = player.currentHealthPercent <= 0;
 
     return (
-        <ul className={styles.list}>
-            {player.abilities.map(ability => <li key={ability.id}><AbilityButton ability={ability} disabled={isDead} /></li>)}
-        </ul>
+        <section className={styles.list}>
+            {player.abilities.map(ability => <AbilityButton key={ability.id} ability={ability} disabled={isDead} />)}
+        </section>
     )
 }

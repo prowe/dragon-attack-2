@@ -2,7 +2,14 @@
     display: flex;
     flex-direction: row;
     gap: .5rem;
-    list-style: none;
     margin: 0;
     padding: 0;
+}
+
+.abilityButton {
+    display: block;
+    width: 10rem;
+    padding: 1rem;
+    font-size: 1.25rem;
+    font-weight: bolder;
 }

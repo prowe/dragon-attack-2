@@ -28,7 +28,7 @@ function CharacterStatusDisplay({gameCharacter}: {gameCharacter: AreaCharacterFr
     });
 
     return (
-        <li className={styles.statusContainer} aria-selected={characterId === currentTargetId} onClick={() => setCurrentTargetId(characterId)}>
+        <button className={styles.targetButton} aria-selected={characterId === currentTargetId} onClick={() => setCurrentTargetId(characterId)}>
             <label>
                 {gameCharacter.name}
                 {loading ?? '...'}
@@ -36,14 +36,14 @@ function CharacterStatusDisplay({gameCharacter}: {gameCharacter: AreaCharacterFr
             </label>
             {error && <div>{error.message}</div>}
             <progress value={gameCharacter.currentHealthPercent} max={100} />
-        </li>
+        </button>
     );
 }
 
 export default function CharactersList({characters}: CharactersListProps) {
     return (
-        <ul className={styles.list}>
+        <section className={styles.list}>
             {characters.map(c => <CharacterStatusDisplay key={c.id} gameCharacter={c} />)}
-        </ul>
+        </section>
     );
 }

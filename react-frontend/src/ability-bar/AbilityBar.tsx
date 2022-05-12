@@ -3,7 +3,6 @@ import { useMutation } from "@apollo/client";
 import { UseAbilityDocument } from "../generated/graphql";
 import useCurrentTarget from "../CurrentTargetContext";
 import styles from './AbilityBar.module.css';
-import { Temporal } from "@js-temporal/polyfill";
 import { useEffect, useState } from "react";
 
 export interface AbilityBarProps {
@@ -18,20 +17,14 @@ interface AbilityButtonProps {
 function AbilityButton({disabled, ability}: AbilityButtonProps) {
     const {currentTargetId} = useCurrentTarget();
     const [executeAbility, {loading}] = useMutation(UseAbilityDocument);
-    const [remainingCooldown, setRemainingCooldown] = useState<Temporal.Duration | null>(null);
-    const [cooldownExpiration, setCooldownExpiration] = useState<Temporal.Instant | null>(null);
+    const [cooldownHandle, setCooldownHandle] = useState<null | NodeJS.Timeout>(null);
 
     useEffect(() => {
-        if (!cooldownExpiration) {
+        if (!cooldownHandle) {
             return;
         }
-        function updateRemainingCooldown(expiration: Temporal.Instant) {
-            const remaining = Temporal.Now.instant().until(expiration);
-            setRemainingCooldown(remaining.sign > 0 ? remaining : null);
-        }
-        const handle = setInterval(updateRemainingCooldown, 1000, cooldownExpiration);
-        return () => clearInterval(handle);
-    }, [cooldownExpiration, setRemainingCooldown])
+        return () => clearTimeout(cooldownHandle);
+    }, [cooldownHandle]);
 
     async function onUseAbility() {
         if (!currentTargetId) {
@@ -44,13 +37,22 @@ function AbilityButton({disabled, ability}: AbilityButtonProps) {
                 targetId: currentTargetId
             }
         });
-        setRemainingCooldown(ability.cooldown);
-        setCooldownExpiration(Temporal.Now.instant().add(ability.cooldown));
+        const handle = setTimeout(() => setCooldownHandle(null), ability.cooldown.total('milliseconds'));
+        setCooldownHandle(handle);
     }
+
+    const cooldownStyle = cooldownHandle ? {
+        "--cooldownDuration": `${ability.cooldown.total('seconds')}s`
+    } as React.CSSProperties: undefined;
+
     return (
-        <button className={styles.abilityButton} onClick={onUseAbility} disabled={!currentTargetId || disabled || loading || Boolean(remainingCooldown)}>
+        <button 
+            className={styles.abilityButton} 
+            onClick={onUseAbility}
+            style={cooldownStyle}
+            disabled={!currentTargetId || disabled || loading || Boolean(cooldownHandle)}>
             {ability.name}
-            {remainingCooldown && ` ${remainingCooldown.total('seconds').toFixed(0)}`}
+            {cooldownHandle && <div className={styles.cooldownBar} />}
         </button>
     );
 }

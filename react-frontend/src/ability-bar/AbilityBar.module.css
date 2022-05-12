@@ -12,4 +12,21 @@
     padding: 1rem;
     font-size: 1.25rem;
     font-weight: bolder;
+    position: relative;;
+}
+
+.cooldownBar {
+    width: 100%;
+    height: 1rem;
+    background-color: red;
+    animation: cooldown var(--cooldownDuration) linear;
+    transform-origin: left center;
+    left: 0;
+    position: absolute;
+}
+
+@keyframes cooldown {
+    to {
+        transform: scaleX(0);
+    }
 }

@@ -15,7 +15,7 @@ namespace DragonAttack
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            var dragonId = Guid.Parse("78D6A1E6-F6A0-4A71-AE46-E86881B9B527");
+            var dragonId = Guid.NewGuid();
             try
             {
                 await clusterClient.GetGrain<IGameCharacterGrain>(dragonId).Spawn(new GameCharacter

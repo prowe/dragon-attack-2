@@ -42,9 +42,9 @@ function useWatchArea (area?: GetCurrentPlayerQuery['player']['location']) {
                                 console.log('Modified cache for new data', newCharacterRef);
                                 return [...existingCharacterRefs, newCharacterRef];
                             case 'CharacterExitedAreaEvent':
-                                const id = areaEvent.gameCharacter.id;
                                 const ref = toReference(areaEvent.gameCharacter);
-                                return existingCharacterRefs.filter(r => r !== ref);
+                                console.log('exiting area', areaEvent, ref);
+                                return existingCharacterRefs.filter(r => r.__ref !== ref?.__ref);
                             default:
                                 return existingCharacterRefs;
                         }

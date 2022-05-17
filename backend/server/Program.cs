@@ -44,6 +44,7 @@ namespace DragonAttack
                 .BindRuntimeType<GameCharacter>()
                 .BindRuntimeType<HealthChangedEvent>()
                 .BindRuntimeType<CharacterEnteredAreaEvent>()
+                .BindRuntimeType<CharacterExitedAreaEvent>()
             ;
 
             services.AddSingleton<IDictionary<Guid, Ability>>(BuildAbilityMap);

@@ -54,6 +54,13 @@ type CharacterEnteredAreaEvent implements AreaEvent {
     gameCharacter: GameCharacter!
 }
 
+type CharacterExitedAreaEvent implements AreaEvent {
+    name: String!
+    area: Area!
+
+    gameCharacter: GameCharacter!
+}
+
 type Mutation {
     joinGame(name: String!): GameCharacter!
 

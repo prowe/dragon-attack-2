@@ -59,6 +59,7 @@ namespace DragonAttack
         public Task<GameCharacter> GetState();
         
         Task Spawn(GameCharacter player);
+        public Task Despawn();
 
         public Task<int> UseAbility(Guid abilityId, params Guid[] targetIds);
 
@@ -102,12 +103,27 @@ namespace DragonAttack
                 AreaId = gameCharacter.LocationAreaId,
                 GameCharacterId = gameCharacter.Id
             };
-            await clusterClient
-                .GetStreamProvider("default")
-                .GetStream<IAreaEvent>(enterAreaEvent.AreaId, nameof(IAreaGrain))
-                .OnNextAsync(enterAreaEvent);
-            await gameCharacterState.WriteStateAsync();
+            await FireEventToArea(enterAreaEvent);
             logger.LogInformation("Spawned character {character}", gameCharacter);
+        }
+
+        public async Task Despawn()
+        {
+            var exitAreaEvent = new CharacterExitedAreaEvent
+            {
+                AreaId = gameCharacterState.State.LocationAreaId,
+                GameCharacterId = this.GetPrimaryKey(),
+            };
+            await FireEventToArea(exitAreaEvent);
+            logger.LogInformation("Despawned character {character}", exitAreaEvent);
+        }
+
+        private Task FireEventToArea(IAreaEvent areaEvent)
+        {
+            return clusterClient
+                .GetStreamProvider("default")
+                .GetStream<IAreaEvent>(areaEvent.AreaId, nameof(IAreaGrain))
+                .OnNextAsync(areaEvent);
         }
 
         public async Task<int> UseAbility(Guid abilityId, params Guid[] targetIds)

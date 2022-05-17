@@ -52,6 +52,23 @@ namespace DragonAttack
         }
     }
 
+    public class CharacterExitedAreaEvent : IAreaEvent
+    {
+        public string Name { get; } = "Character Exited Area";
+        public Guid AreaId { get; set; }
+        internal Guid GameCharacterId { get; set; }
+
+        public Task<GameCharacter> GameCharacter([Service] IClusterClient clusterClient)
+        {
+            return clusterClient.GetGrain<IGameCharacterGrain>(GameCharacterId).GetState();
+        }
+
+        public Task<Area> Area([Service] IClusterClient clusterClient)
+        {
+            return clusterClient.GetGrain<IAreaGrain>(AreaId).GetState();
+        }
+    }
+
 
     [ImplicitStreamSubscription(nameof(IAreaGrain))]
     public class AreaGrain : Orleans.Grain, IAreaGrain

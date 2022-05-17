@@ -22,8 +22,8 @@ namespace DragonAttack
                 {
                     Id = dragonId,
                     Name = "Dragon",
-                    CurrentHitPoints = 1000,
-                    TotalHitPoints = 1000,
+                    CurrentHitPoints = 20,
+                    TotalHitPoints = 20,
                     LocationAreaId = IAreaGrain.StartingArea,
                     AbilityIds = new[] 
                     {

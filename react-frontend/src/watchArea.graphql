@@ -6,5 +6,10 @@ subscription WatchArea($areaId: ID!) {
                 ...AreaCharacter
             }
         }
+        ... on CharacterExitedAreaEvent {
+            gameCharacter {
+                id
+            }
+        }
     }
 }

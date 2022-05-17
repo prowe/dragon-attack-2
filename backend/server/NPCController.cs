@@ -19,6 +19,7 @@ namespace DragonAttack
         private IGameCharacterGrain GameCharacterGrain => gameCharacter ?? throw new NullReferenceException();
         private StreamSubscriptionHandle<IGameCharacterEvent>? gameCharacterStreamHandle;
         private StreamSubscriptionHandle<IAreaEvent>? areaStreamHandle;
+        private IDisposable? turnTimerHandle;
 
         public NPCControllerGrain(
             IClusterClient clusterClient, 
@@ -35,7 +36,7 @@ namespace DragonAttack
             this.gameCharacter = clusterClient.GetGrain<IGameCharacterGrain>(gameCharacterId);
             gameCharacterStreamHandle = await GetGameCharacterStream(gameCharacterId).SubscribeAsync(HandleCharacterEvent);
             await SetupHateList();
-            RegisterTimer(TakeTurn, null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
+            turnTimerHandle = RegisterTimer(TakeTurn, null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
         }
 
         private async Task SetupHateList()
@@ -70,6 +71,10 @@ namespace DragonAttack
             {
                 await RegisterHateForCharacter(healthChangedEvent.SourceId, healthChangedEvent.Difference * -1);
             }
+            if (healthChangedEvent.ResultingHealthPercent == 0)
+            {
+                await HandleDeath();
+            }
         }
 
         private async Task RegisterHateForCharacter(Guid gameCharacterId, int hate)
@@ -100,11 +105,43 @@ namespace DragonAttack
             }
         }
 
+        private async Task HandleDeath()
+        {
+            if (gameCharacter == null)
+            {
+                throw new NullReferenceException();
+            }
+            var state = await gameCharacter.GetState();
+            RegisterTimer(_ => gameCharacter.Despawn(), null, TimeSpan.FromSeconds(10), TimeSpan.MaxValue);
+            RegisterTimer(async _ =>
+            {
+                var newId = Guid.NewGuid();
+                logger.LogInformation("Respawning character {previousId} -> {newId}", this.GetPrimaryKey(), newId);
+                await clusterClient.GetGrain<IGameCharacterGrain>(newId).Spawn(new GameCharacter
+                {
+                    Id = newId,
+                    AbilityIds = state.AbilityIds,
+                    CurrentHitPoints = state.TotalHitPoints,
+                    TotalHitPoints = state.TotalHitPoints,
+                    LocationAreaId = state.LocationAreaId,
+                    Name = state.Name,
+                });
+                await clusterClient.GetGrain<INPCControllerGrain>(newId).TakeControl(newId);
+                this.DeactivateOnIdle();
+            }, null, TimeSpan.FromSeconds(20), TimeSpan.MaxValue);
+        }
+
         private async Task TakeTurn(object _)
         {
             logger.LogInformation("Taking a turn {id}", this.GetPrimaryKey());
             CleanupCooldowns();
             var currentState = await GameCharacterGrain.GetState();
+            if (currentState.CurrentHitPoints == 0)
+            {
+                logger.LogInformation("Skipping turn, character is dead: {id}", this.GetPrimaryKey());
+                return;
+            }
+
             var ability = ChooseAbility(currentState);
             var targets = ChooseTargets(ability);
             if(targets.Any())

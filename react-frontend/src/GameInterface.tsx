@@ -18,23 +18,36 @@ function useWatchArea (area?: GetCurrentPlayerQuery['player']['location']) {
             if (!area) {
                 throw new Error('area is null');
             }
-            const newCharacter = subscriptionData.data?.watchArea.gameCharacter;
+            const areaEvent = subscriptionData.data?.watchArea;
+            if (!areaEvent) {
+                return;
+            }
             const cache = client.cache;
             cache.modify({
                 id: cache.identify(area),
                 fields: {
-                    charactersPresent: (existingCharacterRefs: Reference[] = []) => {
-                        const newCharacterRef = cache.writeFragment({
-                            data: newCharacter,
-                            fragment: AreaCharacterFragmentDoc
-                        });
-                          
-                        if (existingCharacterRefs.some(ref => ref.__ref === newCharacterRef?.__ref)) {
-                            return existingCharacterRefs;
+                    charactersPresent: (existingCharacterRefs: Reference[] = [], {toReference}) => {
+                        switch (areaEvent.__typename) {
+                            case 'CharacterEnteredAreaEvent':
+                                const newCharacter = areaEvent.gameCharacter;
+                                const newCharacterRef = cache.writeFragment({
+                                    data: newCharacter,
+                                    fragment: AreaCharacterFragmentDoc
+                                });
+                                  
+                                if (existingCharacterRefs.some(ref => ref.__ref === newCharacterRef?.__ref)) {
+                                    return existingCharacterRefs;
+                                }
+        
+                                console.log('Modified cache for new data', newCharacterRef);
+                                return [...existingCharacterRefs, newCharacterRef];
+                            case 'CharacterExitedAreaEvent':
+                                const id = areaEvent.gameCharacter.id;
+                                const ref = toReference(areaEvent.gameCharacter);
+                                return existingCharacterRefs.filter(r => r !== ref);
+                            default:
+                                return existingCharacterRefs;
                         }
-
-                        console.log('Modified cache for new data', newCharacterRef);
-                        return [...existingCharacterRefs, newCharacterRef];
                     }
                 }
             });

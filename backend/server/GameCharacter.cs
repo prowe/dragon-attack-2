@@ -104,6 +104,7 @@ namespace DragonAttack
                 GameCharacterId = gameCharacter.Id
             };
             await FireEventToArea(enterAreaEvent);
+            await gameCharacterState.WriteStateAsync();
             logger.LogInformation("Spawned character {character}", gameCharacter);
         }
 

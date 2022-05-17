@@ -123,6 +123,10 @@ namespace DragonAttack
                     areaState.State.CharactersPresentIds.Add(enteredAreaEvent.GameCharacterId);
                     await areaState.WriteStateAsync();
                     break;
+                case CharacterExitedAreaEvent exitedAreaEvent:
+                    areaState.State.CharactersPresentIds.Remove(exitedAreaEvent.GameCharacterId);
+                    await areaState.WriteStateAsync();
+                    break;
                 default:
                     break;
             }

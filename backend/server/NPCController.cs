@@ -112,7 +112,7 @@ namespace DragonAttack
                 throw new NullReferenceException();
             }
             var state = await gameCharacter.GetState();
-            RegisterTimer(_ => gameCharacter.Despawn(), null, TimeSpan.FromSeconds(10), TimeSpan.MaxValue);
+            RegisterTimer(_ => gameCharacter.Despawn(), null, TimeSpan.FromSeconds(10), TimeSpan.FromDays(1));
             RegisterTimer(async _ =>
             {
                 var newId = Guid.NewGuid();
@@ -128,7 +128,7 @@ namespace DragonAttack
                 });
                 await clusterClient.GetGrain<INPCControllerGrain>(newId).TakeControl(newId);
                 this.DeactivateOnIdle();
-            }, null, TimeSpan.FromSeconds(20), TimeSpan.MaxValue);
+            }, null, TimeSpan.FromSeconds(20), TimeSpan.FromDays(1));
         }
 
         private async Task TakeTurn(object _)

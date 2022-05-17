@@ -48,7 +48,6 @@ namespace DragonAttack
             ;
 
             services.AddSingleton<IDictionary<Guid, Ability>>(BuildAbilityMap);
-            services.AddHostedService<DragonSpawner>();
         }
 
         private static void ConfigureOrleans(WebApplicationBuilder builder)
@@ -57,6 +56,7 @@ namespace DragonAttack
             {
                 var config = builder.Configuration;
                 siloBuilder.UseLocalhostClustering();
+                siloBuilder.AddStartupTask<DragonSpawner>();
                 if (config.GetValue<bool>("UseAzureStorage", false))
                 {
                     siloBuilder.AddAzureQueueStreams("default", optionsBuilder => 

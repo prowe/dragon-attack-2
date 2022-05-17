@@ -1,8 +1,9 @@
 using Orleans;
+using Orleans.Runtime;
 
 namespace DragonAttack
 {
-    class DragonSpawner : IHostedService
+    class DragonSpawner : IStartupTask
     {
         private readonly ILogger<DragonSpawner> logger;
         private readonly IClusterClient clusterClient;
@@ -13,7 +14,7 @@ namespace DragonAttack
             this.clusterClient = clusterClient;
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken)
+        public async Task Execute(CancellationToken cancellationToken)
         {
             var dragonId = Guid.NewGuid();
             try
@@ -22,8 +23,8 @@ namespace DragonAttack
                 {
                     Id = dragonId,
                     Name = "Dragon",
-                    CurrentHitPoints = 20,
-                    TotalHitPoints = 20,
+                    CurrentHitPoints = 1000,
+                    TotalHitPoints = 1000,
                     LocationAreaId = IAreaGrain.StartingArea,
                     AbilityIds = new[] 
                     {
@@ -39,7 +40,5 @@ namespace DragonAttack
                 logger.LogInformation("Dragon already spawned");
             }
         }
-
-        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
 }
